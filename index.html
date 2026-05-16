@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OptiDice — Case Study Reports</title>
+  <meta name="description" content="Interactive simulation reports for OptiDice's eight case studies — workforce analytics, manufacturing, supply chain, ED operations, urban traffic, portfolio risk, call center, and supermarket operations." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0b08;
+      --bg-2: #161209;
+      --border: rgba(184,134,11,0.18);
+      --border-hi: rgba(184,134,11,0.40);
+      --gold: #B8860B;
+      --gold-hi: #D4A437;
+      --text: #f0e8d8;
+      --text-soft: #c4b898;
+      --text-muted: #7a6e5a;
+      --radius: 14px;
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--gold-hi); text-decoration: none; }
+    a:hover { color: var(--text); }
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+    header { padding: clamp(56px, 8vw, 112px) 0 clamp(40px, 6vw, 72px); border-bottom: 1px solid var(--border); }
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 16px 0;
+      color: #fff8e7;
+    }
+    .lead {
+      max-width: 60ch;
+      font-size: 1.05rem;
+      color: var(--text-soft);
+      margin: 0;
+    }
+    .lead a { border-bottom: 1px dotted var(--border-hi); }
+    main { padding: clamp(40px, 6vw, 72px) 0 clamp(64px, 10vw, 120px); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 18px;
+    }
+    .card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-hi);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.30);
+    }
+    .card .num {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+    .card h3 { margin: 0; font-size: 1.18rem; color: #fff8e7; letter-spacing: -0.01em; }
+    .card .domain { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
+    .card .open {
+      margin-top: 10px;
+      align-self: flex-start;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      color: var(--gold-hi);
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .card .open:hover { color: var(--text); }
+    footer {
+      padding: 32px 0 48px;
+      border-top: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+    footer a { color: var(--text-soft); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <span class="eyebrow">Reports · OptiDice</span>
+    <h1>Eight simulators.<br>Open the one that matches your decision.</h1>
+    <p class="lead">
+      Interactive HTML reports from OptiDice's case-study portfolio. Each one is a
+      self-contained dashboard — open in a new tab, scroll through, click charts,
+      filter scenarios. Source simulators are private; rendered output is here.
+      Back to the main site: <a href="https://www.optidice.com/">optidice.com</a>.
+    </p>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <div class="grid">
+      <a class="card" href="./01_corporate_world/corporate_world_mc_report.html">
+        <span class="num">01</span>
+        <div class="domain">Labour Market &amp; Organizational Economics</div>
+        <h3>Workforce Analytics</h3>
+        <span class="open">Open report ↗</span>
+      </a>
+      <a class="card" href="./02_smart_factory/smart_factory_mc_report.html">
+        <span class="num">02</span>
+        <div class="domain">Manufacturing Operations &amp; Production Planning</div>
+        <h3>Smart Manufacturing</h3>
+        <span class="open">Open report ↗</span>
+      </a>
+      <a class="card" href="./03_supply_chain/supply_chain_mc_report.html">
+        <span class="num">03</span>
+        <div class="domain">Supply Chain Network &amp; Inventory Management</div>
+        <h3>Supply Chain Resilience</h3>
+        <span class="open">Open report ↗</span>
+      </a>
+      <a class="card" href="./04_emergency_department/ed_patient_flow_report.html">
+        <span class="num">04</span>
+        <div class="domain">Healthcare Operations &amp; Patient Flow</div>
+        <h3>Emergency Department</h3>
+        <span class="open">Open report ↗</span>
+      </a>
+      <a class="card" href="./05_urban_traffic/urban_traffic_mc_report.html">
+        <span class="num">05</span>
+        <div class="domain">Traffic Engineering &amp; Intersection Control</div>
+        <h3>Urban Traffic</h3>
+        <span class="open">Open report ↗</span>
+      </a>
+      <a class="card" href="./06_portfolio_risk/portfolio_risk_mc_report.html">
+        <span class="num">06</span>
+        <div class="domain">Financial Risk Analysis &amp; Asset Allocation</div>
+        <h3>Portfolio Risk Analysis</h3>
+        <span class="open">Open report ↗</span>
+      </a>
+      <a class="card" href="./07_call_center/call_center_mc_report.html">
+        <span class="num">07</span>
+        <div class="domain">Contact Center Operations &amp; Workforce Management</div>
+        <h3>Call Center Operations</h3>
+        <span class="open">Open report ↗</span>
+      </a>
+      <a class="card" href="./08_supermarket_test/supermarket_mc_report.html">
+        <span class="num">08</span>
+        <div class="domain">Retail Operations &amp; Checkout Resilience</div>
+        <h3>Supermarket Operations</h3>
+        <span class="open">Open report ↗</span>
+      </a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="container" style="display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; max-width:1180px; padding:0 28px; margin:0 auto; width:100%;">
+    <span>© 2026 OptiDice · Reports published from <a href="https://github.com/VitorAN/Simulytica">VitorAN/Simulytica</a> (private)</span>
+    <span><a href="https://www.optidice.com/">www.optidice.com ↗</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
