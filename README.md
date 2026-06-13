@@ -19,9 +19,10 @@ This repo exists for one reason: GitHub Pages serves static HTML inline, free, o
 | 3 | `supply-chain-resilience`    | Supply Chain Network & Inventory Management | [Open ↗](./03_supply_chain/supply_chain_mc_report.html) |
 | 4 | `emergency-department`       | Healthcare Operations & Patient Flow | [Open ↗](./04_emergency_department/ed_patient_flow_report.html) |
 | 5 | `urban-traffic`              | Traffic Engineering & Intersection Control | [Open ↗](./05_urban_traffic/urban_traffic_mc_report.html) |
-| 6 | `portfolio-risk-analysis`    | Financial Risk Analysis & Asset Allocation | [Open ↗](./06_portfolio_risk/portfolio_risk_mc_report.html) |
-| 7 | `call-center-operations`     | Contact Center Operations & Workforce Management | [Open ↗](./07_call_center/call_center_mc_report.html) |
-| 8 | `supermarket-operations`     | Retail Operations & Checkout Resilience | [Open ↗](./08_supermarket_test/supermarket_mc_report.html) |
+| 6 | `call-center-operations`     | Contact Center Operations & Workforce Management | [Open ↗](./07_call_center/call_center_mc_report.html) |
+| 7 | `supermarket-operations`     | Retail Operations & Checkout Resilience | [Open ↗](./08_supermarket_test/supermarket_mc_report.html) |
+
+> `portfolio-risk-analysis` was retired on 2026-06-13 (engine defects). Folder numbering (07/08) is preserved to keep report URLs stable.
 
 ## How files get here
 

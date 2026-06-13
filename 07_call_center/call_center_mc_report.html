@@ -1,6 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head><!-- optidice-ux v1 --><!-- oux:meta --><meta name="description" content="Call Center Operations: Monte Carlo simulation case study in Contact Center Operations & Workforce Management. 11,250 simulation runs with interactive charts and full statistical analysis."><!-- /oux:meta --><!-- oux:favicon --><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23161b22"/><text x="32" y="44" font-family="Segoe UI,Arial,sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="%23D4A437">OD</text></svg>"><!-- /oux:favicon --><!-- oux:style --><style>
+.oux-header{position:fixed;top:0;left:0;right:0;height:48px;z-index:10001;
+background:#161b22;color:#e6edf3;display:flex;align-items:center;
+gap:14px;padding:0 14px;box-shadow:0 2px 8px rgba(0,0,0,0.35);
+font-family:"Segoe UI",system-ui,-apple-system,sans-serif;font-size:14px;}
+.oux-header a.oux-wordmark{color:#D4A437;font-weight:800;text-decoration:none;
+letter-spacing:0.5px;font-size:16px;white-space:nowrap;flex:0 0 auto;}
+.oux-header a.oux-wordmark:hover{filter:brightness(1.2);}
+.oux-header .oux-title{flex:1 1 auto;text-align:center;font-weight:600;
+color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+min-width:0;opacity:0.92;}
+.oux-header .oux-right{flex:0 0 auto;display:flex;align-items:center;gap:8px;}
+.oux-header button.oux-skim{background:transparent;border:1px solid #D4A437;
+color:#D4A437;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;
+font-family:inherit;white-space:nowrap;}
+.oux-header button.oux-skim:hover{background:#D4A437;color:#161b22;}
+body.oux-skimming .oux-header button.oux-skim{background:#D4A437;color:#161b22;}
+.oux-header select.oux-cs{background:#0d1117;color:#e6edf3;border:1px solid #30363d;
+border-radius:6px;padding:5px 8px;font-size:13px;max-width:200px;cursor:pointer;
+font-family:inherit;}
+.oux-skiplink{position:absolute;left:-999px;top:0;z-index:10002;background:#D4A437;
+color:#161b22;padding:8px 14px;border-radius:0 0 8px 0;text-decoration:none;font-weight:600;}
+.oux-skiplink:focus{left:0;}
+body{padding-top:48px;}
+
+.scroll-progress{top:48px !important;}
+.sidebar{top:48px !important;height:calc(100vh - 48px) !important;z-index:9000 !important;}
+.sidebar-toggle{top:60px !important;}
+.theme-toggle{top:60px !important;}
+.scroll-top, #scrollTop{}
+
+@media print{.oux-header,.oux-skiplink{display:none !important;}body{padding-top:0 !important;}}
+@media (max-width:600px){.oux-header .oux-title{display:none;}.oux-header select.oux-cs{max-width:120px;}}
+
+.oux-tbl-wrap{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.oux-tbl-wrap > table{min-width:max-content;}
+.table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+@media (max-width:760px){
+  .oux-tbl-wrap > table, .table-responsive > table{font-size:0.82em;}
+}
+
+.oux-exec{border-top:4px solid #D4A437;}
+.oux-exec h2{margin-top:0;}
+.oux-exec ul{margin:14px 0;padding-left:22px;line-height:1.7;}
+.oux-exec ul li{margin-bottom:10px;}
+.oux-exec .oux-jump{display:inline-block;margin-top:8px;font-weight:600;
+color:#D4A437;text-decoration:none;}
+.oux-exec .oux-jump:hover{text-decoration:underline;}
+.oux-visual-card a.oux-visual-link{display:inline-flex;align-items:center;gap:10px;
+font-size:1.05em;font-weight:600;color:#D4A437;text-decoration:none;}
+.oux-visual-card a.oux-visual-link:hover{text-decoration:underline;}
+
+body.oux-skimming .section-body:not(.oux-keep){display:none !important;}
+body.oux-skimming .card:has(> .section-body.oux-keep) h2::after{}
+.card h2{cursor:pointer;}
+h2 .oux-chev{display:inline-block;margin-right:6px;transition:transform 0.2s;font-size:0.7em;color:var(--text-secondary,#888);}
+h2.collapsed .oux-chev{transform:rotate(-90deg);}
+
+@media (min-width:1200px){
+  body.oux-sidebar-pin .sidebar{transform:none !important;}
+  body.oux-sidebar-pin .container{margin-left:260px;}
+}
+</style><!-- /oux:style -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Call Center Staffing & Performance — Monte Carlo Report</title>
@@ -108,25 +170,25 @@ tr:nth-child(even):hover { background: var(--hover); }
 .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 @media print { .sidebar, .sidebar-toggle, .theme-toggle, .scroll-top, .lightbox { display: none !important; } .container { margin-left: 0 !important; padding: 1rem !important; max-width: 100%; } .card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; backdrop-filter: none; } h2::after { display: none; } .section-body.collapsed { max-height: none !important; opacity: 1 !important; } .persona-pane { display: block !important; } .meta-box { margin: 0 0 1rem 0; } section { break-inside: avoid-page; } .figure-container img { max-width: 100% !important; } }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script><!-- oux:chart-fallback --><script>window.Chart||document.write('<script src="../assets/chart.umd.min.js"><\/script>');</script><!-- /oux:chart-fallback -->
 </head>
-<body>
+<body><!-- oux:skiplink --><a class="oux-skiplink" href="#oux-content">Skip to content</a><!-- /oux:skiplink --><!-- oux:header-bar --><div class="oux-header" role="banner"><a class="oux-wordmark" href="https://www.optidice.com" target="_blank" rel="noopener">OptiDice</a><span class="oux-title">Call Center Operations</span><div class="oux-right"><button class="oux-skim" type="button" id="ouxSkimBtn" title="Toggle skim mode (show only summaries)">Skim mode</button><select class="oux-cs" aria-label="Jump to another case study" onchange="if(this.value)location.href=this.value"><option value="">Other case studies ▾</option><option value="../01_corporate_world/corporate_world_mc_report.html">Workforce Analytics</option><option value="../02_smart_factory/smart_factory_mc_report.html">Smart Manufacturing</option><option value="../03_supply_chain/supply_chain_mc_report.html">Supply Chain Resilience</option><option value="../04_emergency_department/ed_patient_flow_report.html">Emergency Department</option><option value="../05_urban_traffic/urban_traffic_mc_report.html">Urban Traffic</option><option value="../08_supermarket_test/supermarket_mc_report.html">Supermarket Operations</option><option value="https://www.optidice.com/portfolio">Portfolio site ↗</option></select></div></div><!-- /oux:header-bar -->
 <div class="scroll-progress" id="scrollProgress"></div>
 <nav class="sidebar" id="sidebar"><h3>&#9776; Navigation</h3></nav>
 <button class="sidebar-toggle" id="sidebarToggle" title="Toggle navigation">&#9776;</button>
 <button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">&#127769;</button>
 <button class="scroll-top" id="scrollTop" title="Back to top">&#8679;</button>
 <div class="lightbox" id="lightbox"><img id="lightboxImg" src="" alt="Zoomed figure"></div>
-<div class="container">
+<div class="container" id="oux-content">
 <h1><span class="emoji-native">&#128222;</span> Call Center Staffing &amp; Performance &mdash; Monte Carlo Report</h1>
-<p style="text-align:center;color:var(--text-secondary);">Generated: 08-Mar-2026 11:50 | Python DES engine</p>
+<p style="text-align:center;color:var(--text-secondary);">Generated: 24-Mar-2026 10:00 | Python DES engine</p>
 <div class="meta-box">
 <div class="meta-item"><div class="value">11250</div><div class="label">Total Simulations</div></div>
 <div class="meta-item"><div class="value">250</div><div class="label">Replications/Combo</div></div>
 <div class="meta-item"><div class="value">24 hr</div><div class="label">Sim. Horizon</div></div>
 <div class="meta-item"><div class="value">45</div><div class="label">Factor Combos</div></div>
-<div class="meta-item"><div class="value">53 s</div><div class="label">Compute Time</div></div>
-</div>
+<div class="meta-item"><div class="value">58 s</div><div class="label">Compute Time</div></div>
+</div><!-- oux:exec-summary --><div class="card oux-exec"><h2>Executive Summary</h2><ul><li><strong>&#9989; Best staffing plan:</strong> <em>Premium</em> achieves <span style="font-weight:700">29.0%</span> service level with <span style="font-weight:700">9.9%</span> abandonment.</li><li><strong>&#10060; Volume impact:</strong> Service level drops from <span style="font-weight:700">27.8%</span> (light) to <span style="font-weight:700">22.4%</span> (heavy), abandonment rises from <span style="font-weight:700">11.9%</span> to <span style="font-weight:700">19.1%</span>.</li><li><strong>&#128200; Patience matters:</strong> Impatient customers yield <span style="font-weight:700">16.3%</span> abandonment vs <span style="font-weight:700">14.1%</span> for patient ones.</li><li><strong>&#128279; SL&ndash;CSAT link:</strong> r = 0.939. Higher service levels strongly correlate with customer satisfaction.</li></ul><a class="oux-jump" href="#s-doe">Jump to full analysis ↓</a></div><!-- /oux:exec-summary -->
 <div class="card" id="toc">
 <h2>&#128195; Table of Contents</h2>
 <div class="two-col">
@@ -339,7 +401,7 @@ tr:nth-child(even):hover { background: var(--hover); }
 <h3>9.4 Service Level Target</h3>
 <p>Industry standard <strong>80/20 rule</strong>: 80% of calls answered within 20 seconds. Based on Erlang-C queueing theory principles adapted for non-stationary arrivals.</p>
 <h3>9.5 Monte Carlo Design</h3>
-<p>5 staffing &times; 3 volumes &times; 3 patience = 45 combinations &times; 250 reps = <strong>11250 runs</strong>. Each run simulates 24 hours (1440 minutes). Executed with 28 CPU cores in 53.0 seconds.</p>
+<p>5 staffing &times; 3 volumes &times; 3 patience = 45 combinations &times; 250 reps = <strong>11250 runs</strong>. Each run simulates 24 hours (1440 minutes). Executed with 28 CPU cores in 57.8 seconds.</p>
 </div>
 <div class="card" id="s-interactive"><h2>10. Interactive Analysis</h2>
 <div class="tab-bar">
@@ -489,7 +551,7 @@ tr:nth-child(even):hover { background: var(--hover); }
 </table></div></div>
 <div class="footer">
 <p>Call Center Staffing &amp; Performance &mdash; Monte Carlo Simulation Engine</p>
-<p>Python 3.11.14 | Report generated in 53 seconds | 11250 total simulation runs</p>
+<p>Python 3.11.14 | Report generated in 58 seconds | 11250 total simulation runs</p>
 <p style="margin-top:8px;font-size:0.75em;">&#128161; Click section headers to collapse/expand &bull; Column headers to sort &bull; Figures to zoom &bull; &#9776; for navigation</p>
 </div>
 </div>
@@ -535,5 +597,90 @@ new Chart(document.getElementById("fatigueByStaff"),{type:"bar",data:{labels:["F
 }
 });
 </script>
-</body>
+<!-- oux:behavior --><script>
+(function(){
+function ready(fn){if(document.readyState!=="loading"){setTimeout(fn,0);}else{document.addEventListener("DOMContentLoaded",fn);}}
+ready(function(){
+  // --- responsive table wrapping (all templates) ---
+  document.querySelectorAll("table").forEach(function(t){
+    var p=t.parentElement;
+    if(!p)return;
+    if(p.classList&&(p.classList.contains("oux-tbl-wrap")||p.classList.contains("table-responsive")))return;
+    // skip tiny KPI-style tables (<=2 cols and <=2 rows)
+    var cols=t.rows&&t.rows[0]?t.rows[0].cells.length:0;
+    if(cols<=1)return;
+    var w=document.createElement("div");w.className="oux-tbl-wrap";
+    p.insertBefore(w,t);w.appendChild(t);
+  });
+
+  // --- ensure .section-body wrappers exist so skim/collapse work at load ---
+  document.querySelectorAll(".card > h2").forEach(function(h2){
+    var nxt=h2.nextElementSibling;
+    if(nxt&&nxt.classList&&nxt.classList.contains("section-body"))return;
+    var w=document.createElement("div");w.className="section-body";
+    var n=h2.nextSibling;
+    while(n){var after=n.nextSibling;w.appendChild(n);n=after;}
+    h2.parentNode.appendChild(w);
+  });
+  // tag summary-ish sections to keep visible in skim mode
+  var keepRe=/summary|insight|dashboard|kpi/i;
+  document.querySelectorAll(".card > h2").forEach(function(h2){
+    var sb=h2.nextElementSibling;
+    if(!sb||!sb.classList.contains("section-body"))return;
+    if(keepRe.test(h2.textContent||"")){sb.classList.add("oux-keep");}
+  });
+  // visible chevron + a11y on h2 (collapse)
+  document.querySelectorAll(".card > h2").forEach(function(h2){
+    if(!h2.querySelector(".oux-chev")){
+      var c=document.createElement("span");c.className="oux-chev";c.textContent="\u25BE";
+      c.setAttribute("aria-hidden","true");h2.insertBefore(c,h2.firstChild);
+    }
+    h2.setAttribute("tabindex","0");
+    h2.setAttribute("role","button");
+    h2.addEventListener("keydown",function(e){
+      if(e.key==="Enter"||e.key===" "){e.preventDefault();h2.click();}
+    });
+  });
+  // a11y on sortable th (Enter/Space)
+  document.querySelectorAll("th").forEach(function(th){
+    if(th.getAttribute("tabindex")!==null)return;
+    th.setAttribute("tabindex","0");
+    th.addEventListener("keydown",function(e){
+      if(e.key==="Enter"||e.key===" "){e.preventDefault();th.click();}
+    });
+  });
+  // sidebar pin: body.oux-sidebar-pin + the >=1200px media query reveal the
+  // sidebar on wide screens only. It never forces .open (which would show the
+  // off-canvas sidebar on mobile). The hamburger keeps working at any width.
+  var pinned=localStorage.getItem("ouxSidebarPin");
+  if(pinned===null)pinned="1"; // default on; only takes visual effect >=1200px
+  if(pinned==="1"){document.body.classList.add("oux-sidebar-pin");}
+  var tgl=document.getElementById("sidebarToggle");
+  if(tgl){tgl.addEventListener("click",function(){
+    // After the report's own handler flips .open, persist that as the pin pref
+    // so a user who closes the sidebar on a wide screen keeps it closed.
+    setTimeout(function(){
+      var sb=document.getElementById("sidebar");
+      var on=!!(sb&&sb.classList.contains("open"));
+      document.body.classList.toggle("oux-sidebar-pin",on);
+      localStorage.setItem("ouxSidebarPin",on?"1":"0");
+    },0);
+  });}
+  // skim mode toggle, persisted
+  var skimBtn=document.getElementById("ouxSkimBtn");
+  function applySkim(on){
+    document.body.classList.toggle("oux-skimming",on);
+    if(skimBtn)skimBtn.setAttribute("aria-pressed",on?"true":"false");
+  }
+  if(localStorage.getItem("ouxSkim")==="1")applySkim(true);
+  if(skimBtn){skimBtn.addEventListener("click",function(){
+    var on=!document.body.classList.contains("oux-skimming");
+    applySkim(on);localStorage.setItem("ouxSkim",on?"1":"0");
+  });}
+  // --- filterTable unification: override with the FIXED variant (report 04) ---
+  window.filterTable=function(inp){var f=inp.value.toLowerCase();var tbl=null;var sib=inp.nextElementSibling;while(sib&&!tbl){if(sib.tagName==="TABLE")tbl=sib;else if(sib.querySelector)tbl=sib.querySelector("table");if(!tbl)sib=sib.nextElementSibling}if(!tbl)return;Array.from(tbl.querySelectorAll("tr")).forEach(function(r,i){if(i===0)return;r.style.display=r.textContent.toLowerCase().indexOf(f)>=0?"":"none"})};
+
+});
+})();
+</script><!-- /oux:behavior --></body>
 </html>

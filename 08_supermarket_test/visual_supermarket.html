@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><!-- optidice-ux v1 --><!-- oux:viewport --><meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- /oux:viewport --><!-- oux:meta --><meta name="description" content="Supermarket - Animated Simulation - an animated canvas simulation by OptiDice."><!-- /oux:meta --><!-- oux:favicon --><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23161b22"/><text x="32" y="44" font-family="Segoe UI,Arial,sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="%23D4A437">OD</text></svg>"><!-- /oux:favicon --><!-- oux:style --><style>
+.oux-header{position:fixed;top:0;left:0;right:0;height:48px;z-index:10001;
+background:#161b22;color:#e6edf3;display:flex;align-items:center;
+gap:14px;padding:0 14px;box-shadow:0 2px 8px rgba(0,0,0,0.35);
+font-family:"Segoe UI",system-ui,-apple-system,sans-serif;font-size:14px;}
+.oux-header a.oux-wordmark{color:#D4A437;font-weight:800;text-decoration:none;
+letter-spacing:0.5px;font-size:16px;white-space:nowrap;flex:0 0 auto;}
+.oux-header a.oux-wordmark:hover{filter:brightness(1.2);}
+.oux-header .oux-title{flex:1 1 auto;text-align:center;font-weight:600;
+color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+min-width:0;opacity:0.92;}
+.oux-header .oux-right{flex:0 0 auto;display:flex;align-items:center;gap:8px;}
+.oux-header button.oux-skim{background:transparent;border:1px solid #D4A437;
+color:#D4A437;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;
+font-family:inherit;white-space:nowrap;}
+.oux-header button.oux-skim:hover{background:#D4A437;color:#161b22;}
+body.oux-skimming .oux-header button.oux-skim{background:#D4A437;color:#161b22;}
+.oux-header select.oux-cs{background:#0d1117;color:#e6edf3;border:1px solid #30363d;
+border-radius:6px;padding:5px 8px;font-size:13px;max-width:200px;cursor:pointer;
+font-family:inherit;}
+.oux-skiplink{position:absolute;left:-999px;top:0;z-index:10002;background:#D4A437;
+color:#161b22;padding:8px 14px;border-radius:0 0 8px 0;text-decoration:none;font-weight:600;}
+.oux-skiplink:focus{left:0;}
+body{padding-top:48px;}
+
+@media print{.oux-header,.oux-skiplink{display:none !important;}body{padding-top:0 !important;}}
+@media (max-width:600px){.oux-header .oux-title{display:none;}.oux-header select.oux-cs{max-width:120px;}}
+
+.oux-tbl-wrap{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.oux-tbl-wrap > table{min-width:max-content;}
+.table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+@media (max-width:760px){
+  .oux-tbl-wrap > table, .table-responsive > table{font-size:0.82em;}
+}
+</style><!-- /oux:style -->
+<meta charset="UTF-8">
+<title>Visual Simulation · Supermarket under Surge</title>
+<style>
+  :root {
+    --parchment: #f5efe1;
+    --parchment-dark: #e8dfc8;
+    --ink: #2a2a2a;
+    --ink-soft: #5a5a5a;
+    --bad: #b33939;
+    --bad-soft: #d9534f;
+    --good: #2d8a45;
+    --good-soft: #5cb85c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--parchment);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    padding: 18px 14px 28px;
+    min-height: 100vh;
+  }
+  header.app-head { text-align: center; margin-bottom: 6px; }
+  header.app-head h1 { margin: 0; font-size: 21px; letter-spacing: 0.4px; }
+  header.app-head p { margin: 4px 0 0; color: var(--ink-soft); font-size: 13px; }
+
+  .controls {
+    display: flex; gap: 12px; justify-content: center;
+    margin: 14px 0 18px;
+  }
+  .controls button {
+    background: #fff;
+    border: 1.5px solid var(--ink);
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 4px;
+    font-family: inherit;
+    color: var(--ink);
+    transition: background 0.15s, transform 0.05s;
+    min-width: 120px;
+  }
+  .controls button#speedBtn { min-width: 170px; }
+  .controls button#resetBtn { min-width: 140px; }
+  .controls button:hover { background: var(--parchment-dark); }
+  .controls button:active { transform: translateY(1px); }
+  .controls .speed-label {
+    display: inline-block;
+    font-family: "Courier New", monospace;
+    margin-left: 6px;
+    font-size: 14px;
+  }
+
+  .stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .store {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+    border: 2px solid;
+    display: flex;
+    flex-direction: column;
+  }
+  .store-bad { border-color: var(--bad); }
+  .store-good { border-color: var(--good); }
+
+  .store-header {
+    padding: 10px 14px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .store-bad .store-header { background: linear-gradient(135deg, var(--bad), #8b2c2c); }
+  .store-good .store-header { background: linear-gradient(135deg, var(--good), #1f6b34); }
+
+  .scenario-name { font-weight: 800; font-size: 14px; letter-spacing: 0.6px; }
+  .scenario-sub  { font-size: 11px; opacity: 0.9; margin-top: 2px; }
+  .clock {
+    font-family: "Courier New", monospace;
+    font-size: 22px; font-weight: 700;
+  }
+
+  .day-progress { height: 4px; background: rgba(255,255,255,0.22); }
+  .day-progress-fill { height: 100%; background: #fff; width: 0%; }
+
+  .store-floor {
+    position: relative;
+    background: #faf6ec;
+  }
+  .store-floor canvas { display: block; width: 100%; height: auto; }
+
+  .kpis {
+    padding: 10px 12px;
+    background: #fff;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px 14px;
+    font-size: 11.5px;
+    border-top: 1px solid var(--parchment-dark);
+  }
+  .kpi {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dotted #d8d2bb;
+    padding-bottom: 3px;
+  }
+  .kpi-label { color: var(--ink-soft); }
+  .kpi-value {
+    font-weight: 700;
+    font-family: "Courier New", monospace;
+    text-align: right;
+  }
+  .kpi-proj {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #998a5a;
+    margin-top: 1px;
+    letter-spacing: 0.2px;
+  }
+  .delta-good { color: var(--good); font-weight: 700; }
+  .delta-bad  { color: var(--bad);  font-weight: 700; }
+
+  .final-banner {
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #fff;
+    display: none;
+  }
+  .store-bad .final-banner.show { display: block; background: #6e1f1f; }
+  .store-good .final-banner.show { display: block; background: #1f5a2a; }
+
+  .legend {
+    text-align: center;
+    margin: 18px auto 0;
+    max-width: 900px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.9;
+  }
+  .legend-dot {
+    display: inline-block;
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 4px;
+    border: 1px solid rgba(0,0,0,0.15);
+  }
+  .legend-sq {
+    display: inline-block;
+    width: 12px; height: 9px;
+    vertical-align: middle;
+    margin-right: 4px;
+    border-radius: 2px;
+    border: 1px solid rgba(0,0,0,0.2);
+  }
+  .legend-pill { display: inline-block; margin: 0 9px; }
+  .legend small { display: block; margin-top: 6px; color: #8a8062; }
+
+  @media (max-width: 900px) {
+    .stage { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body><!-- oux:skiplink --><a class="oux-skiplink" href="#oux-content">Skip to content</a><!-- /oux:skiplink --><!-- oux:header-bar --><div class="oux-header" role="banner"><a class="oux-wordmark" href="https://www.optidice.com" target="_blank" rel="noopener">OptiDice</a><span class="oux-title">Supermarket - Animated Simulation</span><div class="oux-right"><a class="oux-skim" href="supermarket_mc_report.html" style="text-decoration:none;">← Back to full report</a></div></div><!-- /oux:header-bar -->
+
+<header class="app-head" id="oux-content">
+  <h1>Operational Simulation · Typical day under a Surge event</h1>
+  <p>Same customer flow on both sides — only the operational decisions change (checkouts + replenishment)</p>
+</header>
+
+<div class="controls">
+  <button id="speedBtn">Speed<span class="speed-label" id="speedLabel">1.0×</span></button>
+  <button id="pauseBtn">⏸ Pause</button>
+  <button id="stepBackBtn" title="Rewind 5 sim-minutes">⏮ −5min</button>
+  <button id="stepFwdBtn" title="Advance 5 sim-minutes">⏭ +5min</button>
+  <button id="resetBtn">⟲ Reset</button>
+</div>
+
+<div class="stage">
+  <div class="store store-bad">
+    <div class="store-header">
+      <div>
+        <div class="scenario-name">WORST CASE</div>
+        <div class="scenario-sub">Lean Ops · Surge Event · Fragile Replenishment</div>
+      </div>
+      <div class="clock" id="clock-bad">08:00</div>
+    </div>
+    <div class="day-progress"><div class="day-progress-fill" id="prog-bad"></div></div>
+    <div class="store-floor"><canvas id="canvas-bad"></canvas></div>
+    <div class="final-banner" id="banner-bad">END OF DAY · FINAL RESULTS</div>
+    <div class="kpis" id="kpis-bad"></div>
+  </div>
+
+  <div class="store store-good">
+    <div class="store-header">
+      <div>
+        <div class="scenario-name">RESILIENT CASE</div>
+        <div class="scenario-sub">Peak Flex · Surge Event · Resilient Replenishment</div>
+      </div>
+      <div class="clock" id="clock-good">08:00</div>
+    </div>
+    <div class="day-progress"><div class="day-progress-fill" id="prog-good"></div></div>
+    <div class="store-floor"><canvas id="canvas-good"></canvas></div>
+    <div class="final-banner" id="banner-good">END OF DAY · FINAL RESULTS</div>
+    <div class="kpis" id="kpis-good"></div>
+  </div>
+</div>
+
+<div class="legend">
+  <span class="legend-pill"><span class="legend-dot" style="background:#4c78a8"></span>Quick Trip</span>
+  <span class="legend-pill"><span class="legend-dot" style="background:#54a24b"></span>Regular Basket</span>
+  <span class="legend-pill"><span class="legend-dot" style="background:#e74c3c"></span>Large Weekly Shop</span>
+  <br>
+  <span class="legend-pill"><span class="legend-sq" style="background:#8b6f47"></span>Traditional</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#c5944e"></span>Express</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#6d9eb2"></span>Self Checkout</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#c8c1ad"></span>Closed checkout</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#f1c40f"></span>Being served</span>
+  <br>
+  <span class="legend-pill">
+    <svg width="18" height="18" style="vertical-align:middle; margin-right:4px;">
+      <circle cx="9" cy="9" r="4.5" fill="#4c78a8"/>
+      <circle cx="9" cy="9" r="7" fill="none" stroke="#c0392b" stroke-width="1.6"/>
+    </svg>
+    Basket reduced by stockout
+  </span>
+  <span class="legend-pill"><strong style="color:#a3334e">!</strong> &nbsp;Manager approval (blocks the checkout)</span>
+  <small>
+    14h (08:00–22:00) compressed into ~90s at default speed · Demand calibrated on 21-day mean × 1.20 (surge) ·
+    Fixed seed: identical result on every reset
+  </small>
+</div>
+
+<script>
+// ============================================================
+// Calibration — extracted from data/customer_purchases_sample.csv
+// and data/checkouts_by_hour.csv (21 observed days).
+// ============================================================
+const HOUR_START = 8, HOUR_END = 22;
+const ENTRY_MINUTES = (HOUR_END - HOUR_START) * 60;   // 840
+const SIM_MINUTES   = ENTRY_MINUTES + 60;             // +60min for closing
+const REAL_DURATION_SEC = 90;                          // 1× ≈ 90s
+const SPEEDS = [0.5, 1.0, 2.0, 4.0];
+let speedIdx = 1;
+
+// Average arrivals per hour (observed) — multiplied by SURGE_MULT
+const HOURLY_ARRIVALS_OBS = {
+  8:2.14, 9:2.95, 10:2.14, 11:2.24, 12:2.57, 13:3.10, 14:3.19,
+  15:2.38, 16:2.43, 17:3.29, 18:3.86, 19:3.33, 20:3.52, 21:2.24
+};
+const SURGE_MULT = 1.20;
+
+// Basket mix (observed)
+const TYPE_PROB = { "Quick Trip": 0.392, "Regular Basket": 0.442, "Large Weekly Shop": 0.166 };
+const TYPE_COLOR = { "Quick Trip": "#4c78a8", "Regular Basket": "#54a24b", "Large Weekly Shop": "#e74c3c" };
+
+// Average observed times (minutes)
+const TYPE_SERVICE_BASE  = { "Quick Trip": 2.72, "Regular Basket": 5.20, "Large Weekly Shop": 12.28 };
+// Shopping (entry → join queue) inferred from CSV — used as the base "time in store"
+const TYPE_SHOPPING_BASE = { "Quick Trip": 9,    "Regular Basket": 17,   "Large Weekly Shop": 28   };
+const TYPE_BASKET_BASE   = { "Quick Trip": 30.7, "Regular Basket": 102.7, "Large Weekly Shop": 317.0 };
+
+// Hourly stockout pressure (0..1, derived from inventory_events.csv)
+const STOCKOUT_HOUR = { 12: 0.30, 13: 0.50, 16: 0.40, 18: 0.70, 19: 0.50, 20: 0.40 };
+
+// Hourly average promo lift (from promotions.csv, factor that scales arrivals
+// when combined with the Surge PROMO_EXTRA)
+const HOUR_PROMO_LIFT = {
+  10: 0.10, 11: 0.20, 12: 0.40, 13: 0.45, 14: 0.25, 15: 0.20,
+  16: 0.30, 17: 0.40, 18: 0.55, 19: 0.45, 20: 0.35, 21: 0.15
+};
+
+// Surge demand multipliers (applied to both scenarios)
+const SURGE_PROMO_EXTRA   = 1.10;
+const SURGE_BASKET_MULT   = 1.06;
+const SURGE_SHOPPING_MULT = 1.08;
+const SURGE_PATIENCE_MULT = 0.88;
+
+// Checkout preference by purchase type (from the simulator's lane_pref_probs)
+const PREF_BASE = {
+  "Quick Trip":        { Traditional: 0.25, Express: 0.40, Self: 0.35 },
+  "Regular Basket":    { Traditional: 0.62, Express: 0.13, Self: 0.25 },
+  "Large Weekly Shop": { Traditional: 0.88, Express: 0.02, Self: 0.10 }
+};
+
+// Baseline schedule of open checkouts per hour (rounded mean of observed data).
+// T = Traditional (CHK 1-6), E = Express (7-8), S = Self (9-10)
+const BASELINE_LANES = {
+  8: {T:2,E:0,S:1}, 9: {T:3,E:1,S:1}, 10:{T:5,E:1,S:2}, 11:{T:6,E:2,S:2},
+  12:{T:6,E:2,S:2}, 13:{T:6,E:2,S:2}, 14:{T:6,E:2,S:2}, 15:{T:6,E:2,S:2},
+  16:{T:6,E:2,S:2}, 17:{T:6,E:2,S:2}, 18:{T:6,E:2,S:2}, 19:{T:6,E:1,S:2},
+  20:{T:5,E:1,S:2}, 21:{T:2,E:0,S:2}
+};
+
+function laneSchedule(scenario, hour) {
+  if (hour < 8) return {T:0,E:0,S:0};
+  if (hour > 21) return {T:0,E:0,S:0};
+  const b = { T: BASELINE_LANES[hour].T, E: BASELINE_LANES[hour].E, S: BASELINE_LANES[hour].S };
+  if (scenario === "lean") {
+    if (b.T >= 4) b.T -= 1;
+    if (hour >= 19 && b.E >= 1) b.E -= 1;
+  } else if (scenario === "flex") {
+    const peak = [12, 13, 18, 19, 20];
+    if (peak.includes(hour)) {
+      if (b.T < 6) b.T += 1;
+      if (b.S < 2) b.S += 1;
+    }
+    if ([18, 19, 20].includes(hour) && b.E < 2) b.E += 1;
+  }
+  return b;
+}
+
+// Configuration of the two scenarios
+const SCENARIOS = {
+  bad: {
+    label: "WORST CASE", staffing: "lean",
+    serviceMult: 1.08, approvalMult: 1.00, selfShift: 0.03,
+    stockoutSev: 1.45, stockoutLoss: 1.30, frictionMult: 1.20
+  },
+  good: {
+    label: "RESILIENT CASE", staffing: "flex",
+    serviceMult: 0.94, approvalMult: 0.88, selfShift: 0.08,
+    stockoutSev: 0.65, stockoutLoss: 0.70, frictionMult: 0.80
+  }
+};
+
+const N_DAYS_PROJECTION = 21;  // for the KPI projection
+
+// ============================================================
+// Deterministic RNG (mulberry32)
+// ============================================================
+function mulberry32(seed) {
+  let s = seed >>> 0;
+  return function() {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function poissonSample(rng, lambda) {
+  const L = Math.exp(-lambda);
+  let k = 0, p = 1;
+  do { k++; p *= rng(); } while (p > L);
+  return k - 1;
+}
+function pickWeighted(rng, weights) {
+  const r = rng();
+  let acc = 0, lastKey = null;
+  for (const k in weights) { lastKey = k; acc += weights[k]; if (r < acc) return k; }
+  return lastKey;
+}
+
+// ============================================================
+// Deterministic customer-stream generation (shared across scenarios)
+// ============================================================
+function generateCustomers(seed) {
+  const rng = mulberry32(seed);
+  const customers = [];
+  // IDs start at 1 to avoid the JS "0 is falsy" pitfall in checks
+  // like `if (lane.serving)` or `!lane.serving`.
+  let id = 1;
+  for (let h = HOUR_START; h < HOUR_END; h++) {
+    const promoLift = HOUR_PROMO_LIFT[h] || 0;
+    const promoMult = 1.0 + SURGE_PROMO_EXTRA * promoLift;
+    const lambda = HOURLY_ARRIVALS_OBS[h] * SURGE_MULT * promoMult;
+    const n = poissonSample(rng, lambda);
+    for (let i = 0; i < n; i++) {
+      const minuteOffset = rng() * 59.9;
+      const entryMin = (h - HOUR_START) * 60 + minuteOffset;
+      const type = pickWeighted(rng, TYPE_PROB);
+      const shoppingJitter = 0.7 + rng() * 0.6;
+      const serviceJitter  = 0.75 + rng() * 0.5;
+      const basketJitter   = 0.75 + rng() * 0.5;
+      const patience       = (4 + rng() * 8) * SURGE_PATIENCE_MULT; // surge: customers are less patient
+      const needsApproval  = rng() < 0.067;
+      const prefRand       = rng();
+      const stockHitRand   = rng();
+      const stockLossRand  = rng();
+      const shopSpot       = [rng(), rng()];
+      customers.push({
+        id: id++, entryMin, hour: h, type,
+        shoppingBase: TYPE_SHOPPING_BASE[type] * shoppingJitter * SURGE_SHOPPING_MULT,
+        serviceBase:  TYPE_SERVICE_BASE[type]  * serviceJitter,
+        basketBase:   TYPE_BASKET_BASE[type]   * basketJitter * SURGE_BASKET_MULT,
+        patience, needsApproval,
+        prefRand, stockHitRand, stockLossRand, shopSpot
+      });
+    }
+  }
+  customers.sort((a,b) => a.entryMin - b.entryMin);
+  return customers;
+}
+
+// ============================================================
+// Scenario simulation
+// ============================================================
+class StoreSim {
+  constructor(scenarioKey, sourceCustomers) {
+    this.key = scenarioKey;
+    this.scn = SCENARIOS[scenarioKey];
+
+    // Physical checkouts 1..10
+    this.lanes = [];
+    for (let i = 1; i <= 6;  i++) this.lanes.push({ id: i, type: "Traditional", open: false, serving: null, queue: [] });
+    for (let i = 7; i <= 8;  i++) this.lanes.push({ id: i, type: "Express",     open: false, serving: null, queue: [] });
+    for (let i = 9; i <= 10; i++) this.lanes.push({ id: i, type: "Self",        open: false, serving: null, queue: [] });
+
+    // Copy customers and compute scenario-specific parameters
+    this.customers = sourceCustomers.map(src => {
+      const c = { ...src };
+      const stockNorm = Math.min(1.8, (STOCKOUT_HOUR[c.hour] || 0) * this.scn.stockoutSev);
+      // Shopping: stockout adds friction (Python formula: 0.06 × stockNorm × frictionMult)
+      c.shoppingMin = c.shoppingBase * (1 + 0.06 * stockNorm * this.scn.frictionMult);
+      c.stockoutNorm = stockNorm;
+      // Service: scenario multiplier + manager approval boost
+      let svc = c.serviceBase * this.scn.serviceMult;
+      if (c.needsApproval) svc *= (1.6 * this.scn.approvalMult);
+      c.serviceMin = svc;
+      // Basket value: stockout may reduce it
+      const hitProb = Math.min(0.55, 0.05 + 0.30 * stockNorm);
+      let basket = c.basketBase;
+      if (c.stockHitRand < hitProb) {
+        const lostFrac = Math.min(0.45, (0.05 + c.stockLossRand * 0.15) * this.scn.stockoutLoss);
+        const lost = basket * lostFrac;
+        basket -= lost;
+        c.lostStockout = lost;
+      } else c.lostStockout = 0;
+      c.basket = basket;
+      // Checkout preference (with the scenario's self-checkout shift)
+      const prefs = { ...PREF_BASE[c.type] };
+      if (this.scn.selfShift > 0 && c.type !== "Large Weekly Shop") {
+        const move = Math.min(prefs.Traditional * 0.35, this.scn.selfShift);
+        prefs.Traditional -= move;
+        prefs.Self += move;
+      }
+      let acc = 0, pref = "Traditional";
+      for (const t of ["Traditional", "Express", "Self"]) {
+        acc += prefs[t];
+        if (c.prefRand < acc) { pref = t; break; }
+      }
+      c.prefType = pref;
+
+      c.state = "unborn";
+      c.shoppingDoneAt = null;
+      c.joinedQueueAt = null;
+      c.startedServingAt = null;
+      c.finishedAt = null;
+      c.laneId = null;
+      return c;
+    });
+
+    this.kpi = {
+      entered: 0, shopping: 0, queueing: 0, serving: 0,
+      completed: 0, abandoned: 0,
+      revenue: 0, lostAbandon: 0, lostStockout: 0,
+      sumWait: 0, waitCount: 0, sumPreCheckout: 0
+    };
+    this.lastUpdateMin = 0;
+    this.finalized = false;
+  }
+
+  laneByType(type) { return this.lanes.filter(l => l.type === type); }
+
+  update(toMinute) {
+    if (toMinute < this.lastUpdateMin) return;
+    const hour = HOUR_START + Math.floor(toMinute / 60);
+    const safeHour = Math.max(8, Math.min(21, hour));
+    const sched = laneSchedule(this.scn.staffing, safeHour);
+    const openCounts = { Traditional: sched.T, Express: sched.E, Self: sched.S };
+
+    // Open/close checkouts per the current hour's schedule.
+    // Important: if a checkout should close but still has someone being served
+    // OR customers in queue, keep it open until empty — otherwise those customers
+    // would be stuck (lane.open=false blocks both pulling from queue and new entries).
+    for (const type of ["Traditional", "Express", "Self"]) {
+      const lanes = this.laneByType(type);
+      for (let i = 0; i < lanes.length; i++) {
+        const shouldOpen = i < openCounts[type];
+        if (!shouldOpen && (lanes[i].serving !== null || lanes[i].queue.length > 0)) {
+          lanes[i].open = true;
+        } else {
+          lanes[i].open = shouldOpen;
+        }
+      }
+    }
+
+    // 1) Entries
+    for (const c of this.customers) {
+      if (c.state === "unborn" && c.entryMin <= toMinute) {
+        c.state = "shopping";
+        c.shoppingDoneAt = c.entryMin + c.shoppingMin;
+        this.kpi.entered++;
+      }
+    }
+
+    // 2) Shopping → queue
+    for (const c of this.customers) {
+      if (c.state === "shopping" && toMinute >= c.shoppingDoneAt) {
+        const openLanes = this.lanes.filter(l => l.open);
+        if (openLanes.length === 0) {
+          c.state = "abandoned";
+          this.kpi.abandoned++;
+          this.kpi.lostAbandon += c.basket;
+          continue;
+        }
+        let pool = openLanes.filter(l => l.type === c.prefType);
+        if (pool.length === 0) pool = openLanes;
+        pool = pool.slice().sort((a, b) => {
+          const al = a.queue.length + (a.serving !== null ? 1 : 0);
+          const bl = b.queue.length + (b.serving !== null ? 1 : 0);
+          if (al !== bl) return al - bl;
+          return a.id - b.id;
+        });
+        const lane = pool[0];
+        lane.queue.push(c.id);
+        c.state = "queuing";
+        c.laneId = lane.id;
+        c.joinedQueueAt = toMinute;
+      }
+    }
+
+    // 3) Abandonment by patience
+    for (const c of this.customers) {
+      if (c.state === "queuing" && (toMinute - c.joinedQueueAt) > c.patience) {
+        const lane = this.lanes.find(l => l.id === c.laneId);
+        if (lane) {
+          const idx = lane.queue.indexOf(c.id);
+          if (idx >= 0) lane.queue.splice(idx, 1);
+        }
+        c.state = "abandoned";
+        this.kpi.abandoned++;
+        this.kpi.lostAbandon += c.basket;
+      }
+    }
+
+    // 4) Checkout pulls the next from queue
+    for (const lane of this.lanes) {
+      if (lane.open && lane.serving === null && lane.queue.length > 0) {
+        const cid = lane.queue.shift();
+        const c = this.customers.find(x => x.id === cid);
+        if (!c) continue;
+        c.state = "serving";
+        c.startedServingAt = toMinute;
+        c.finishedAt = toMinute + c.serviceMin;
+        lane.serving = c.id;
+        const wait = toMinute - c.joinedQueueAt;
+        this.kpi.sumWait += wait;
+        this.kpi.waitCount++;
+        this.kpi.sumPreCheckout += c.shoppingMin + wait;
+      }
+    }
+
+    // 5) Serving → done
+    for (const lane of this.lanes) {
+      if (lane.serving !== null) {
+        const c = this.customers.find(x => x.id === lane.serving);
+        if (c) {
+          if (toMinute >= c.finishedAt) {
+            c.state = "done";
+            lane.serving = null;
+            this.kpi.completed++;
+            this.kpi.revenue += c.basket;
+            this.kpi.lostStockout += c.lostStockout;
+          }
+        } else {
+          // Defensive: orphan reference (should not happen). Release the checkout.
+          lane.serving = null;
+        }
+      }
+    }
+
+    // Final: force-abandon anyone still in queue at closing time
+    if (toMinute >= SIM_MINUTES && !this.finalized) {
+      for (const c of this.customers) {
+        if (c.state === "queuing" || c.state === "shopping") {
+          c.state = "abandoned";
+          this.kpi.abandoned++;
+          this.kpi.lostAbandon += c.basket;
+        }
+      }
+      for (const lane of this.lanes) lane.queue = [];
+      this.finalized = true;
+    }
+
+    // Counts live
+    let shopping = 0, queueing = 0, serving = 0;
+    for (const c of this.customers) {
+      if (c.state === "shopping") shopping++;
+      else if (c.state === "queuing") queueing++;
+      else if (c.state === "serving") serving++;
+    }
+    this.kpi.shopping = shopping;
+    this.kpi.queueing = queueing;
+    this.kpi.serving  = serving;
+
+    this.lastUpdateMin = toMinute;
+  }
+}
+
+// ============================================================
+// Rendering (canvas)
+// ============================================================
+const STORE_W = 540, STORE_H = 470;
+const HEADER_Y = 30;
+const SHOP_TOP = 30, SHOP_H = 220, SHOP_BOT = SHOP_TOP + SHOP_H; // 250
+const LANE_AREA_TOP = SHOP_BOT;
+const LANE_POST_H = 28;
+const LANE_POST_TOP = STORE_H - LANE_POST_H - 20;          // 422
+const LANE_POST_BOT = LANE_POST_TOP + LANE_POST_H;          // 450
+const N_LANES = 10;
+const LANE_W = STORE_W / N_LANES;                           // 54
+const QUEUE_STACK = 14;
+const MAX_VISIBLE_QUEUE = 9;
+// Vertical positions are separated to avoid drawing "serving" and the top-of-queue
+// at the same cy (which gave the impression of a "stuck" customer).
+// Gap increased to 30px so the white halo of the serving customer's $XX text
+// does not cover the dot of the next-in-queue customer.
+const SERVING_CY    = LANE_POST_TOP - 14;            // 408
+const QUEUE_FIRST_CY = SERVING_CY - 30;              // 378
+
+function laneIdxFromId(id) { return id - 1; }
+function laneX(idx) { return LANE_W / 2 + idx * LANE_W; }
+
+function laneColor(type, open, busy) {
+  if (!open) return "#c8c1ad";
+  if (busy)  return "#f1c40f";
+  if (type === "Traditional") return "#8b6f47";
+  if (type === "Express")     return "#c5944e";
+  return "#6d9eb2";
+}
+
+function shopPositionFor(c) {
+  const pad = 18;
+  const w = STORE_W - pad * 2;
+  const h = SHOP_H - 38;
+  return {
+    x: pad + c.shopSpot[0] * w,
+    y: SHOP_TOP + 28 + c.shopSpot[1] * h
+  };
+}
+
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = STORE_W * dpr;
+  canvas.height = STORE_H * dpr;
+  canvas.style.width  = STORE_W + "px";
+  canvas.style.height = STORE_H + "px";
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return ctx;
+}
+
+function drawStore(ctx, sim, currentMin) {
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, 0, STORE_H);
+  grad.addColorStop(0, "#faf6ec");
+  grad.addColorStop(1, "#f0e8d1");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, STORE_W, STORE_H);
+
+  // ---- Header / entrance row ----
+  ctx.fillStyle = "#a0915d";
+  ctx.font = "bold 10px -apple-system, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText("↓ ENTRANCE", 14, 16);
+
+  // Stockout indicator badge (right side)
+  const hour = HOUR_START + Math.floor(currentMin / 60);
+  const stock = STOCKOUT_HOUR[hour] || 0;
+  if (stock > 0 && currentMin < ENTRY_MINUTES) {
+    ctx.fillStyle = "#a3334e";
+    ctx.font = "bold 9px -apple-system, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText("⚠ STOCKOUT IN PROGRESS", STORE_W - 12, 16);
+  }
+
+  // ---- Shopping area ----
+  ctx.strokeStyle = "#d6cbac";
+  ctx.setLineDash([3, 4]);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(6, SHOP_TOP + 4, STORE_W - 12, SHOP_H - 8);
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = "#bfae7a";
+  ctx.font = "bold 9px -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.save();
+  ctx.translate(STORE_W / 2, SHOP_TOP + 19);
+  ctx.fillText("S H O P P I N G   A R E A", 0, 0);
+  ctx.restore();
+
+  // ---- Lane area background ----
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, LANE_AREA_TOP, STORE_W, STORE_H - LANE_AREA_TOP);
+
+  // Lane separator lines
+  ctx.strokeStyle = "#ece5d2";
+  ctx.lineWidth = 1;
+  for (let i = 1; i < N_LANES; i++) {
+    const x = i * LANE_W;
+    ctx.beginPath();
+    ctx.moveTo(x, LANE_AREA_TOP);
+    ctx.lineTo(x, STORE_H);
+    ctx.stroke();
+  }
+
+  // Section divider
+  ctx.strokeStyle = "#d8cfb3";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, LANE_AREA_TOP);
+  ctx.lineTo(STORE_W, LANE_AREA_TOP);
+  ctx.stroke();
+
+  // ---- Lane posts (cashier counters) ----
+  for (let i = 0; i < N_LANES; i++) {
+    const lane = sim.lanes[i];
+    const x = laneX(i);
+    const busy = lane.serving !== null;
+    const fill = laneColor(lane.type, lane.open, busy);
+
+    // post
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = "#6b6045";
+    ctx.lineWidth = 1;
+    roundRect(ctx, x - 16, LANE_POST_TOP, 32, LANE_POST_H, 3);
+    ctx.fill();
+    ctx.stroke();
+
+    // lane number
+    ctx.fillStyle = lane.open ? "#fff" : "#7a7359";
+    ctx.font = "bold 11px -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(i + 1), x, LANE_POST_TOP + LANE_POST_H / 2);
+
+    // type tag
+    ctx.fillStyle = "#9e9377";
+    ctx.font = "bold 8px -apple-system, sans-serif";
+    const tag = lane.type === "Traditional" ? "TRD" : (lane.type === "Express" ? "EXP" : "SLF");
+    ctx.fillText(tag, x, LANE_POST_BOT + 9);
+  }
+
+  // ---- Customers ----
+  // Build queue index per lane for positions
+  const queuePosMap = {};
+  for (const lane of sim.lanes) queuePosMap[lane.id] = lane.queue.slice();
+
+  for (const c of sim.customers) {
+    if (c.state === "unborn" || c.state === "done" || c.state === "abandoned") continue;
+
+    let cx, cy, r = 5;
+    let stroke = "#fff", strokeW = 0.8;
+
+    if (c.state === "shopping") {
+      const p = shopPositionFor(c);
+      cx = p.x; cy = p.y; r = 5;
+    } else if (c.state === "queuing") {
+      const idx = queuePosMap[c.laneId].indexOf(c.id);
+      const visIdx = Math.min(idx, MAX_VISIBLE_QUEUE);
+      cx = laneX(laneIdxFromId(c.laneId));
+      cy = QUEUE_FIRST_CY - visIdx * QUEUE_STACK;
+      r = 5;
+      if (idx >= MAX_VISIBLE_QUEUE) {
+        ctx.globalAlpha = 0.35;
+      }
+    } else if (c.state === "serving") {
+      cx = laneX(laneIdxFromId(c.laneId));
+      cy = SERVING_CY;
+      r = 7;
+      stroke = "#1f1f1f";
+      strokeW = 1.6;
+    }
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = TYPE_COLOR[c.type];
+    ctx.fill();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = strokeW;
+    ctx.stroke();
+
+    // Red ring around customers whose basket was reduced by stockout
+    if (c.lostStockout > 0) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 2.5, 0, Math.PI * 2);
+      ctx.strokeStyle = "#c0392b";
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    }
+
+    // Basket value above the customer — with white halo for readability
+    const basketStr = "$" + Math.round(c.basket);
+    ctx.font = "bold 9px -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.lineJoin = "round";
+    if (c.state === "queuing") {
+      // For queue customers, draw text to the right of the dot (vertical stack would be unreadable)
+      ctx.font = "bold 8px -apple-system, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.strokeStyle = "rgba(255,255,255,0.95)";
+      ctx.lineWidth = 2.4;
+      ctx.strokeText(basketStr, cx + r + 2, cy);
+      ctx.fillStyle = c.lostStockout > 0 ? "#a82828" : "#3a3a3a";
+      ctx.fillText(basketStr, cx + r + 2, cy);
+    } else {
+      // Shopping and serving: text above the dot
+      ctx.strokeStyle = "rgba(255,255,255,0.95)";
+      ctx.lineWidth = 2.6;
+      ctx.strokeText(basketStr, cx, cy - r - 3);
+      ctx.fillStyle = c.lostStockout > 0 ? "#a82828" : "#2a2a2a";
+      ctx.fillText(basketStr, cx, cy - r - 3);
+    }
+
+    if (c.needsApproval && c.state === "serving") {
+      ctx.fillStyle = "#a3334e";
+      ctx.font = "bold 10px -apple-system, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("!", cx, cy - 1);
+    }
+
+    ctx.globalAlpha = 1.0;
+  }
+
+  // ---- Hour markers for context (top-right of each hour change) ----
+  // simple subtle hour text in top center
+  const min = Math.floor(currentMin % 60);
+  const clampedHour = Math.min(22, HOUR_START + Math.floor(currentMin / 60));
+  ctx.fillStyle = "#bfae7a";
+  ctx.font = "10px 'Courier New', monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(
+    `${String(clampedHour).padStart(2, "0")}:${String(min).padStart(2, "0")}`,
+    STORE_W / 2,
+    16
+  );
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function fmt$(v) {
+  return "$" + Math.round(v).toLocaleString("en-US");
+}
+
+function renderKPIs(elId, sim, otherSim) {
+  const k = sim.kpi;
+  const o = otherSim.kpi;
+  const avgWait = k.waitCount > 0 ? k.sumWait / k.waitCount : 0;
+  const avgPre  = k.waitCount > 0 ? k.sumPreCheckout / k.waitCount : 0;
+  const abandonPct = k.entered > 0 ? (k.abandoned / k.entered) * 100 : 0;
+  const lostTotal  = k.lostAbandon + k.lostStockout;
+  const lostTotalO = o.lostAbandon + o.lostStockout;
+
+  function delta(value, otherValue, fmt, betterWhen) {
+    const d = value - otherValue;
+    if (Math.abs(d) < 0.01) return "";
+    const isBetter = (betterWhen === "lower" ? d < 0 : d > 0);
+    const cls = isBetter ? "delta-good" : "delta-bad";
+    const sign = d > 0 ? "+" : "";
+    return ` <span class="${cls}">(${sign}${fmt(d)})</span>`;
+  }
+
+  const rows = [
+    ["Entered",      `${k.entered}`,                                                  ""],
+    ["Shopping",     `${k.shopping}`,                                                 ""],
+    ["In queue",     `${k.queueing}`,                                                 ""],
+    ["Served",       `${k.completed}` + delta(k.completed, o.completed, v => v.toFixed(0), "higher"), ""],
+    ["Abandoned",    `${k.abandoned} (${abandonPct.toFixed(1)}%)`,                    ""],
+    ["Avg wait",     avgWait.toFixed(1) + " min",                                     ""],
+    ["Pre-checkout", avgPre.toFixed(1) + " min" + delta(avgPre, otherSim.kpi.waitCount > 0 ? otherSim.kpi.sumPreCheckout / otherSim.kpi.waitCount : 0, v => v.toFixed(1) + "min", "lower"), ""],
+    ["Revenue",      fmt$(k.revenue) + delta(k.revenue, o.revenue, v => fmt$(v), "higher"), `21d proj.: ${fmt$(k.revenue * N_DAYS_PROJECTION)}`],
+    ["Total loss",   fmt$(lostTotal) + delta(lostTotal, lostTotalO, v => fmt$(v), "lower"), `21d proj.: ${fmt$(lostTotal * N_DAYS_PROJECTION)}`],
+  ];
+
+  let html = "";
+  for (const [lbl, val, sub] of rows) {
+    html += `<div class="kpi"><span class="kpi-label">${lbl}</span><span class="kpi-value">${val}${sub ? `<br><span class="kpi-proj">${sub}</span>` : ""}</span></div>`;
+  }
+  document.getElementById(elId).innerHTML = html;
+}
+
+// ============================================================
+// Main loop
+// ============================================================
+const SEED = 20260608;   // fixed → deterministic result
+const STEP_MIN = 5;      // size of "1 step" in sim-minutes
+let customers, simBad, simGood, ctxBad, ctxGood;
+let simMinute = 0;
+let lastFrameTime = null;
+let running = true;
+
+function buildAll() {
+  customers = generateCustomers(SEED);
+  simBad  = new StoreSim("bad",  customers);
+  simGood = new StoreSim("good", customers);
+  ctxBad  = setupCanvas(document.getElementById("canvas-bad"));
+  ctxGood = setupCanvas(document.getElementById("canvas-good"));
+  simMinute = 0;
+  lastFrameTime = null;
+  running = true;
+  document.getElementById("pauseBtn").textContent = "⏸ Pause";
+  document.getElementById("banner-bad").classList.remove("show");
+  document.getElementById("banner-good").classList.remove("show");
+}
+
+// Advance (or rewind+advance) both simulations to targetMin.
+// To rewind: since update is monotonic, we recreate the sims from scratch and
+// replay to the target instant (deterministic → same outputs).
+function jumpTo(targetMin) {
+  targetMin = Math.max(0, Math.min(SIM_MINUTES, targetMin));
+  if (targetMin < simBad.lastUpdateMin) {
+    simBad  = new StoreSim("bad",  customers);
+    simGood = new StoreSim("good", customers);
+  }
+  const stride = 0.5;
+  let m = simBad.lastUpdateMin;
+  while (m < targetMin - 1e-6) {
+    m = Math.min(targetMin, m + stride);
+    simBad.update(m);
+    simGood.update(m);
+  }
+  simMinute = targetMin;
+  // Reset banner if rewinding before end
+  if (targetMin < SIM_MINUTES) {
+    document.getElementById("banner-bad").classList.remove("show");
+    document.getElementById("banner-good").classList.remove("show");
+  }
+}
+
+function tick(now) {
+  if (lastFrameTime === null) lastFrameTime = now;
+  const dt = (now - lastFrameTime) / 1000;
+  lastFrameTime = now;
+
+  if (running && simMinute < SIM_MINUTES) {
+    const minPerSec = ENTRY_MINUTES / REAL_DURATION_SEC;
+    simMinute += dt * minPerSec * SPEEDS[speedIdx];
+    if (simMinute > SIM_MINUTES) simMinute = SIM_MINUTES;
+    simBad.update(simMinute);
+    simGood.update(simMinute);
+  }
+  drawStore(ctxBad,  simBad,  simMinute);
+  drawStore(ctxGood, simGood, simMinute);
+
+  const clampedHour = Math.min(22, HOUR_START + Math.floor(simMinute / 60));
+  const min = Math.floor(simMinute % 60);
+  const clockStr = `${String(clampedHour).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+  document.getElementById("clock-bad").textContent  = clockStr;
+  document.getElementById("clock-good").textContent = clockStr;
+
+  const progPct = Math.min(100, (simMinute / SIM_MINUTES) * 100);
+  document.getElementById("prog-bad").style.width  = progPct + "%";
+  document.getElementById("prog-good").style.width = progPct + "%";
+
+  renderKPIs("kpis-bad",  simBad,  simGood);
+  renderKPIs("kpis-good", simGood, simBad);
+
+  if (simMinute >= SIM_MINUTES) {
+    document.getElementById("banner-bad").classList.add("show");
+    document.getElementById("banner-good").classList.add("show");
+  }
+
+  requestAnimationFrame(tick);
+}
+
+// ============================================================
+// Controls
+// ============================================================
+function updateSpeedLabel() {
+  document.getElementById("speedLabel").textContent = SPEEDS[speedIdx].toFixed(1) + "×";
+}
+document.getElementById("speedBtn").addEventListener("click", () => {
+  speedIdx = (speedIdx + 1) % SPEEDS.length;
+  updateSpeedLabel();
+});
+document.getElementById("pauseBtn").addEventListener("click", () => {
+  running = !running;
+  document.getElementById("pauseBtn").textContent = running ? "⏸ Pause" : "▶ Resume";
+});
+document.getElementById("stepFwdBtn").addEventListener("click", () => {
+  running = false;
+  document.getElementById("pauseBtn").textContent = "▶ Resume";
+  jumpTo(simMinute + STEP_MIN);
+});
+document.getElementById("stepBackBtn").addEventListener("click", () => {
+  running = false;
+  document.getElementById("pauseBtn").textContent = "▶ Resume";
+  jumpTo(simMinute - STEP_MIN);
+});
+document.getElementById("resetBtn").addEventListener("click", () => {
+  buildAll();
+});
+
+// Boot
+updateSpeedLabel();
+buildAll();
+requestAnimationFrame(tick);
+</script>
+
+<!-- oux:behavior --><script>
+(function(){
+function ready(fn){if(document.readyState!=="loading"){setTimeout(fn,0);}else{document.addEventListener("DOMContentLoaded",fn);}}
+ready(function(){
+  // --- responsive table wrapping (all templates) ---
+  document.querySelectorAll("table").forEach(function(t){
+    var p=t.parentElement;
+    if(!p)return;
+    if(p.classList&&(p.classList.contains("oux-tbl-wrap")||p.classList.contains("table-responsive")))return;
+    // skip tiny KPI-style tables (<=2 cols and <=2 rows)
+    var cols=t.rows&&t.rows[0]?t.rows[0].cells.length:0;
+    if(cols<=1)return;
+    var w=document.createElement("div");w.className="oux-tbl-wrap";
+    p.insertBefore(w,t);w.appendChild(t);
+  });
+
+});
+})();
+</script><!-- /oux:behavior --></body>
+</html>
