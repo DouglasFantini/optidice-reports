@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><!-- optidice-ux v1 --><!-- oux:viewport --><meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- /oux:viewport --><!-- oux:meta --><meta name="description" content="Call Center Operations - Animated Simulation - an animated canvas simulation by OptiDice."><!-- /oux:meta --><!-- oux:favicon --><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23161b22"/><text x="32" y="44" font-family="Segoe UI,Arial,sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="%23D4A437">OD</text></svg>"><!-- /oux:favicon --><!-- oux:style --><style>
+.oux-header{position:fixed;top:0;left:0;right:0;height:48px;z-index:10001;
+background:#161b22;color:#e6edf3;display:flex;align-items:center;
+gap:14px;padding:0 14px;box-shadow:0 2px 8px rgba(0,0,0,0.35);
+font-family:"Segoe UI",system-ui,-apple-system,sans-serif;font-size:14px;}
+.oux-header a.oux-wordmark{color:#D4A437;font-weight:800;text-decoration:none;
+letter-spacing:0.5px;font-size:16px;white-space:nowrap;flex:0 0 auto;}
+.oux-header a.oux-wordmark:hover{filter:brightness(1.2);}
+.oux-header .oux-title{flex:1 1 auto;text-align:center;font-weight:600;
+color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+min-width:0;opacity:0.92;}
+.oux-header .oux-right{flex:0 0 auto;display:flex;align-items:center;gap:8px;}
+.oux-header button.oux-skim{background:transparent;border:1px solid #D4A437;
+color:#D4A437;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;
+font-family:inherit;white-space:nowrap;}
+.oux-header button.oux-skim:hover{background:#D4A437;color:#161b22;}
+body.oux-skimming .oux-header button.oux-skim{background:#D4A437;color:#161b22;}
+.oux-skiplink{position:absolute;left:-999px;top:0;z-index:10002;background:#D4A437;
+color:#161b22;padding:8px 14px;border-radius:0 0 8px 0;text-decoration:none;font-weight:600;}
+.oux-skiplink:focus{left:0;}
+body{padding-top:48px;}
+
+@media print{.oux-header,.oux-skiplink{display:none !important;}body{padding-top:0 !important;}}
+@media (max-width:600px){.oux-header .oux-title{display:none;}}
+
+.oux-tbl-wrap{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.oux-tbl-wrap > table{min-width:max-content;}
+.table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+@media (max-width:760px){
+  .oux-tbl-wrap > table, .table-responsive > table{font-size:0.82em;}
+}
+</style><!-- /oux:style -->
+<meta charset="UTF-8">
+<title>Visual Simulation · Call Center under Time-Varying Demand</title>
+<style>
+  :root {
+    --parchment: #f5efe1;
+    --parchment-dark: #e8dfc8;
+    --ink: #2a2a2a;
+    --ink-soft: #5a5a5a;
+    --bad: #b33939;
+    --good: #2d8a45;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--parchment);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    padding: 18px 14px 28px;
+    min-height: 100vh;
+  }
+  header.app-head { text-align: center; margin-bottom: 6px; }
+  header.app-head h1 { margin: 0; font-size: 21px; letter-spacing: 0.4px; }
+  header.app-head p { margin: 4px 0 0; color: var(--ink-soft); font-size: 13px; }
+
+  .controls {
+    display: flex; gap: 12px; justify-content: center;
+    margin: 14px 0 18px;
+    flex-wrap: wrap;
+  }
+  .controls button {
+    background: #fff;
+    border: 1.5px solid var(--ink);
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 4px;
+    font-family: inherit;
+    color: var(--ink);
+    transition: background 0.15s, transform 0.05s;
+    min-width: 120px;
+  }
+  .controls button#speedBtn { min-width: 170px; }
+  .controls button#resetBtn { min-width: 140px; }
+  .controls button:hover { background: var(--parchment-dark); }
+  .controls button:active { transform: translateY(1px); }
+  .controls .speed-label {
+    display: inline-block;
+    font-family: "Courier New", monospace;
+    margin-left: 6px;
+    font-size: 14px;
+  }
+
+  .stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .store {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+    border: 2px solid;
+    display: flex;
+    flex-direction: column;
+  }
+  .store-bad { border-color: var(--bad); }
+  .store-good { border-color: var(--good); }
+
+  .store-header {
+    padding: 10px 14px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .store-bad .store-header { background: linear-gradient(135deg, var(--bad), #8b2c2c); }
+  .store-good .store-header { background: linear-gradient(135deg, var(--good), #1f6b34); }
+
+  .scenario-name { font-weight: 800; font-size: 14px; letter-spacing: 0.6px; }
+  .scenario-sub  { font-size: 11px; opacity: 0.9; margin-top: 2px; }
+  .clock {
+    font-family: "Courier New", monospace;
+    font-size: 22px; font-weight: 700;
+  }
+
+  .day-progress { height: 4px; background: rgba(255,255,255,0.22); }
+  .day-progress-fill { height: 100%; background: #fff; width: 0%; }
+
+  .store-floor { position: relative; background: #faf6ec; }
+  .store-floor canvas { display: block; width: 100%; height: auto; }
+
+  .kpis {
+    padding: 10px 12px;
+    background: #fff;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px 14px;
+    font-size: 11.5px;
+    border-top: 1px solid var(--parchment-dark);
+  }
+  .kpi {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dotted #d8d2bb;
+    padding-bottom: 3px;
+  }
+  .kpi-label { color: var(--ink-soft); }
+  .kpi-value {
+    font-weight: 700;
+    font-family: "Courier New", monospace;
+    text-align: right;
+  }
+  .kpi-proj {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #998a5a;
+    margin-top: 1px;
+    letter-spacing: 0.2px;
+  }
+  .delta-good { color: var(--good); font-weight: 700; }
+  .delta-bad  { color: var(--bad);  font-weight: 700; }
+  .sl-chip {
+    display: inline-block;
+    color: #fff;
+    padding: 0 7px;
+    border-radius: 3px;
+    font-weight: 800;
+  }
+
+  .final-banner {
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #fff;
+    display: none;
+  }
+  .store-bad .final-banner.show { display: block; background: #6e1f1f; }
+  .store-good .final-banner.show { display: block; background: #1f5a2a; }
+
+  .legend {
+    text-align: center;
+    margin: 18px auto 0;
+    max-width: 980px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.9;
+  }
+  .legend-sq {
+    display: inline-block;
+    width: 12px; height: 9px;
+    vertical-align: middle;
+    margin-right: 4px;
+    border-radius: 2px;
+    border: 1px solid rgba(0,0,0,0.2);
+  }
+  .legend-dot {
+    display: inline-block;
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 4px;
+    border: 1px solid rgba(0,0,0,0.25);
+  }
+  .legend-pill { display: inline-block; margin: 0 9px; }
+  .legend small { display: block; margin-top: 6px; color: #8a8062; }
+
+  @media (max-width: 900px) {
+    .stage { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body><!-- oux:skiplink --><a class="oux-skiplink" href="#oux-content">Skip to content</a><!-- /oux:skiplink --><!-- oux:header-bar --><div class="oux-header" role="banner"><a class="oux-wordmark" href="https://www.optidice.com" target="_blank" rel="noopener">OptiDice</a><span class="oux-title">Call Center Operations - Animated Simulation</span><div class="oux-right"><a class="oux-skim" href="call_center_mc_report.html" style="text-decoration:none;">← Back to full report</a></div></div><!-- /oux:header-bar -->
+
+<header class="app-head" id="oux-content">
+  <h1>Operational Simulation · 24 hours at a multi-channel call center</h1>
+  <p>Same calls arrive on both sides — only the staffing policy changes (fixed roster vs demand-responsive)</p>
+</header>
+
+<div class="controls">
+  <button id="speedBtn">Speed<span class="speed-label" id="speedLabel">1.0×</span></button>
+  <button id="pauseBtn">⏸ Pause</button>
+  <button id="stepBackBtn" title="Rewind 30 sim-minutes">⏮ −30min</button>
+  <button id="stepFwdBtn" title="Advance 30 sim-minutes">⏭ +30min</button>
+  <button id="resetBtn">⟲ Reset</button>
+</div>
+
+<div class="stage">
+  <div class="store store-bad">
+    <div class="store-header">
+      <div>
+        <div class="scenario-name">FIXED ROSTER</div>
+        <div class="scenario-sub">Understaffed · 7 agents all day · No flex</div>
+      </div>
+      <div class="clock" id="clock-bad">00:00</div>
+    </div>
+    <div class="day-progress"><div class="day-progress-fill" id="prog-bad"></div></div>
+    <div class="store-floor"><canvas id="canvas-bad"></canvas></div>
+    <div class="final-banner" id="banner-bad">END OF DAY · FINAL RESULTS</div>
+    <div class="kpis" id="kpis-bad"></div>
+  </div>
+
+  <div class="store store-good">
+    <div class="store-header">
+      <div>
+        <div class="scenario-name">DEMAND-RESPONSIVE</div>
+        <div class="scenario-sub">Dynamic · 4–16 agents · Scales with the queue</div>
+      </div>
+      <div class="clock" id="clock-good">00:00</div>
+    </div>
+    <div class="day-progress"><div class="day-progress-fill" id="prog-good"></div></div>
+    <div class="store-floor"><canvas id="canvas-good"></canvas></div>
+    <div class="final-banner" id="banner-good">END OF DAY · FINAL RESULTS</div>
+    <div class="kpis" id="kpis-good"></div>
+  </div>
+</div>
+
+<div class="legend">
+  <span class="legend-pill"><span class="legend-dot" style="background:#4c78a8"></span>Billing (30%)</span>
+  <span class="legend-pill"><span class="legend-dot" style="background:#8e44ad"></span>Technical (25%)</span>
+  <span class="legend-pill"><span class="legend-dot" style="background:#e67e22"></span>Sales (20%)</span>
+  <span class="legend-pill"><span class="legend-dot" style="background:#17a2a0"></span>General (25%)</span>
+  <br>
+  <span class="legend-pill"><span class="legend-dot" style="background:#e74c3c"></span>Caller about to abandon</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#2d8a45"></span>Agent on a call</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#bdb79f"></span>Agent idle / open seat</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#c8c1ad;border-style:dashed"></span>Seat not staffed</span>
+  <br>
+  <span class="legend-pill">Dots stream in from the left → wait in the QUEUE → reach an AGENT seat → leave right (handled)</span>
+  <small>
+    24 h (1,440 min) compressed into ~38 s at default speed · Arrivals follow the observed hourly demand curve with peaks at 10–12h and 14–17h ·
+    Service Level = % answered within 20 s (industry 80/20 target) · Same call stream on both panels · Fixed seed: identical result on every reset ·
+    Email/chat channels, IVR, VIP routing and agent fatigue from the full model are not visualised
+  </small>
+</div>
+
+<script>
+/* ENGINE-START (pure logic, no DOM — kept separate so it can be tested headless) */
+// ============================================================
+// Calibration — mirrors the call_center_sim.py domain:
+//   24h day, minute-by-minute, voice channel.
+//   Demand curve peaks at 10-12h and 14-17h (REPORT_GUIDE.md §6/SP18).
+//   Service Level = % answered within 20s (80/20 target).
+//   BAD  = fixed understaffed roster (8 agents all day).
+//   GOOD = dynamic, demand-responsive staffing (scales 4..14 with the queue).
+// Tuned so GOOD clearly clears the 80/20 target and BAD drowns at peak:
+//   GOOD  SL ~85% · abandon ~4% · ASA ~9s
+//   BAD   SL ~55% · abandon ~18% · ASA ~70s
+// ============================================================
+const SIM_MIN     = 1440;          // minutes in a 24h day
+const TARGET_SEC  = 20;            // SL threshold (answered within 20s)
+const REAL_DURATION_SEC = 38;      // 1× ≈ 38s for the full day
+const SPEEDS = [0.5, 1.0, 2.0, 4.0];
+
+// Call types: 0=Billing 1=Technical 2=Sales 3=General
+const TYPE_NAME  = ["Billing", "Technical", "Sales", "General"];
+const TYPE_PROB  = [0.30, 0.25, 0.20, 0.25];           // cumulative used below
+const TYPE_AHT   = [5.0, 12.0, 8.0, 6.0];              // mean handle time [min]
+const TYPE_COLOR = ["#4c78a8", "#8e44ad", "#e67e22", "#17a2a0"];
+
+// Hourly arrival intensity (calls/min) — bimodal day with two peaks.
+// Night is quiet; morning ramp; 10-12 peak; lunch dip; 14-17 second peak; evening fade.
+// Calibrated in Erlang terms (rate × AHT): peak offered load ~11.5 Erlangs, so a
+// dynamic roster scaling to ~16 agents clears 80/20 while a fixed 8 floods 09–17h.
+const HOURLY_RATE = [
+  0.13, 0.11, 0.08, 0.08, 0.11, 0.18,   // 0-5  (overnight, light)
+  0.34, 0.58, 0.92, 1.18, 1.45, 1.51,   // 6-11 (morning ramp + first peak)
+  1.12, 1.18, 1.42, 1.51, 1.34, 1.13,   // 12-17 (lunch dip + second peak)
+  0.84, 0.61, 0.42, 0.29, 0.21, 0.16    // 18-23 (evening fade)
+];
+const PEAK_THRESHOLD = 1.30;       // calls/min above which we badge "PEAK"
+
+// Patience: callers abandon if their wait exceeds this (minutes), with jitter.
+const PATIENCE_MEAN = 3.0;         // impatient band — long fixed-roster queues shed callers
+
+// ── Staffing policies ──
+// BAD: flat understaffed roster.
+const BAD_AGENTS = 7;
+// GOOD: demand-responsive. Base on the hour's expected load, then nudge by live queue.
+//   target agents ≈ rate(h) * AHT_avg / target_occupancy, clamped, then +1 per heavy queue.
+const AHT_AVG = TYPE_AHT[0]*TYPE_PROB[0] + TYPE_AHT[1]*TYPE_PROB[1]
+              + TYPE_AHT[2]*TYPE_PROB[2] + TYPE_AHT[3]*TYPE_PROB[3]; // ~7.55 min
+const GOOD_MIN_AGENTS = 4;
+const GOOD_MAX_AGENTS = 16;
+const GOOD_TARGET_OCC = 0.82;      // aim agents to run ~82% busy
+
+const SCENARIOS = {
+  bad:  { label: "FIXED ROSTER",      policy: "fixed"   },
+  good: { label: "DEMAND-RESPONSIVE", policy: "dynamic" }
+};
+
+// ============================================================
+// Deterministic RNG (mulberry32)
+// ============================================================
+function mulberry32(seed) {
+  let s = seed >>> 0;
+  return function() {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function poissonSample(rng, lambda) {
+  const L = Math.exp(-lambda);
+  let k = 0, p = 1;
+  do { k++; p *= rng(); } while (p > L);
+  return k - 1;
+}
+
+// ============================================================
+// Deterministic arrival-stream generation (shared by both scenarios)
+// One pass over the day; each minute draws a Poisson count at that hour's rate.
+// ============================================================
+function generateCalls(seed) {
+  const rng = mulberry32(seed);
+  const stream = [];
+  // IDs start at 1 to avoid the JS "0 is falsy" pitfall.
+  let id = 1;
+  for (let m = 0; m < SIM_MIN; m++) {
+    const h = Math.floor(m / 60);
+    const n = poissonSample(rng, HOURLY_RATE[h]);
+    for (let i = 0; i < n; i++) {
+      // type by cumulative probability
+      const rv = rng();
+      let vt = 3, acc = 0;
+      for (let k = 0; k < 4; k++) { acc += TYPE_PROB[k]; if (rv < acc) { vt = k; break; } }
+      const aht = TYPE_AHT[vt] * (0.6 + rng() * 0.8);          // lognormal-ish spread
+      const patience = PATIENCE_MEAN * (0.5 + rng() * 1.1);    // per-caller patience [min]
+      const subMin = rng();                                    // arrival offset within the minute
+      stream.push({ id: id++, m, t: m + subMin, vt, aht, patience });
+    }
+  }
+  return stream;
+}
+
+function slClass(slPct) {
+  if (slPct >= 80) return "good";
+  if (slPct >= 65) return "warn";
+  return "bad";
+}
+
+// ============================================================
+// Scenario simulation — minute-by-minute (sub-stepped for smoothness),
+// mirrors a single-server-pool call center: arrivals → queue → agents → handled,
+// with abandonment when wait exceeds patience.
+// State is carried at fine resolution so the animation can read it any instant.
+// ============================================================
+const DT = 0.25;   // sim minutes per integration step (4 steps / sim-minute)
+
+class CallSim {
+  constructor(scenarioKey, stream) {
+    this.key = scenarioKey;
+    this.scn = SCENARIOS[scenarioKey];
+    this.stream = stream;
+    this.streamIdx = 0;
+    this.t = 0;                       // current sim time [min], advances by DT
+
+    // agents: array of {busyUntil, call} ; length = current staffing
+    this.agents = [];
+    this.staffN = this._targetStaff(0, 0);
+    for (let i = 0; i < GOOD_MAX_AGENTS; i++) this.agents.push({ open: false, call: null, busyUntil: 0 });
+    this._setStaff(this.staffN);
+
+    this.queue = [];                  // waiting calls {…, joinedAt}
+    this.handledRecent = [];          // {t, vt} for the "leaving right" animation
+
+    // accumulators
+    this.arrived = 0;
+    this.handled = 0;
+    this.abandoned = 0;
+    this.answeredWithinTarget = 0;
+    this.answeredTotal = 0;
+    this.asaSum = 0;                  // sum of speed-of-answer [min] over answered
+    this.maxQ = 0;
+    this.finalized = false;
+  }
+
+  _targetStaff(t, liveQ) {
+    if (this.scn.policy === "fixed") return BAD_AGENTS;
+    const h = Math.min(23, Math.floor(t / 60));
+    // Erlang-flavoured base from the hour's expected load.
+    let base = Math.round((HOURLY_RATE[h] * AHT_AVG) / GOOD_TARGET_OCC);
+    // live nudge: if the queue is building, add a couple of seats; if empty, trim.
+    if (liveQ > 6) base += 2;
+    else if (liveQ > 2) base += 1;
+    else if (liveQ === 0 && base > GOOD_MIN_AGENTS) base -= 1;
+    return Math.max(GOOD_MIN_AGENTS, Math.min(GOOD_MAX_AGENTS, base));
+  }
+
+  _setStaff(n) {
+    this.staffN = n;
+    for (let i = 0; i < this.agents.length; i++) {
+      const a = this.agents[i];
+      if (i < n) { a.open = true; }
+      else {
+        // a seat beyond the roster stays "open" until its current call ends,
+        // then closes — never drops a live caller.
+        a.open = (a.call !== null);
+      }
+    }
+  }
+
+  liveQueue() { return this.queue.length; }
+  busyAgents() { let b = 0; for (const a of this.agents) if (a.call !== null) b++; return b; }
+  openSeats()  { let o = 0; for (let i = 0; i < this.agents.length; i++) if (this.agents[i].open || this.agents[i].call) o++; return o; }
+
+  step() {
+    const t = this.t;
+    const tNext = t + DT;
+
+    // ── re-evaluate staffing once per whole minute boundary ──
+    if (Math.abs(t - Math.round(t)) < 1e-9) {
+      this._setStaff(this._targetStaff(t, this.queue.length));
+    }
+
+    // ── arrivals in [t, tNext) from the shared stream ──
+    while (this.streamIdx < this.stream.length && this.stream[this.streamIdx].t < tNext) {
+      const c = this.stream[this.streamIdx++];
+      if (c.t < t) continue; // already past (only on rebuilds)
+      this.arrived++;
+      this.queue.push({ id: c.id, vt: c.vt, aht: c.aht, patience: c.patience, joinedAt: c.t });
+    }
+
+    // ── abandonment: drop callers whose wait exceeded patience ──
+    for (let i = this.queue.length - 1; i >= 0; i--) {
+      const q = this.queue[i];
+      if (tNext - q.joinedAt >= q.patience) {
+        this.queue.splice(i, 1);
+        this.abandoned++;
+      }
+    }
+
+    // ── release finished agents ──
+    for (const a of this.agents) {
+      if (a.call !== null && tNext >= a.busyUntil) {
+        this.handledRecent.push({ t: tNext, vt: a.call.vt });
+        a.call = null;
+        this.handled++;
+        if (!a.open) { /* over-roster seat empties → will close on next _setStaff */ }
+      }
+    }
+
+    // ── assign queued calls to free, open agents (FIFO) ──
+    for (const a of this.agents) {
+      if (!a.open || a.call !== null) continue;
+      if (this.queue.length === 0) break;
+      const c = this.queue.shift();
+      a.call = c;
+      a.busyUntil = tNext + c.aht;
+      const asa = tNext - c.joinedAt;          // speed of answer [min]
+      this.answeredTotal++;
+      this.asaSum += asa;
+      if (asa * 60 <= TARGET_SEC) this.answeredWithinTarget++;
+    }
+
+    // ── metrics ──
+    if (this.queue.length > this.maxQ) this.maxQ = this.queue.length;
+
+    // prune leaving-right animations older than ~0.8 sim-min
+    while (this.handledRecent.length > 0 && this.handledRecent[0].t < tNext - 0.8) this.handledRecent.shift();
+
+    this.t = tNext;
+    if (this.t >= SIM_MIN) this.finalized = true;
+  }
+
+  advanceTo(target) {
+    const cap = Math.min(target, SIM_MIN);
+    // step in DT increments; guard against fp drift
+    let guard = 0;
+    while (this.t < cap - 1e-9 && guard < 200000) { this.step(); guard++; }
+  }
+
+  kpis() {
+    const sl = this.answeredTotal > 0 ? (this.answeredWithinTarget / this.answeredTotal) * 100 : 0;
+    const aban = this.arrived > 0 ? (this.abandoned / this.arrived) * 100 : 0;
+    const asaSec = this.answeredTotal > 0 ? (this.asaSum / this.answeredTotal) * 60 : 0;
+    return {
+      arrived: this.arrived,
+      inQueue: this.queue.length,
+      handled: this.handled,
+      abandoned: this.abandoned,
+      sl, slClass: slClass(sl),
+      abandonPct: aban,
+      asaSec,
+      maxQ: this.maxQ,
+      staffN: this.staffN,
+      busy: this.busyAgents()
+    };
+  }
+}
+/* ENGINE-END */
+</script>
+
+<script>
+// ============================================================
+// Rendering (canvas) — left→right flow: arrivals · queue · agent seats · handled
+// ============================================================
+const CAN_W = 540, CAN_H = 470;
+
+// Horizontal bands
+const TOP_PAD   = 34;                 // badges + clock row
+const FLOW_TOP  = 56;
+const FLOW_BOT  = 300;                // arrival + queue + seats live here
+const CURVE_TOP = 320;                // hourly call-volume curve indicator
+const CURVE_BOT = 392;
+const BAR_TOP   = 410;                // 24h progress bar
+const BAR_BOT   = 426;
+
+// Columns of the flow
+const ARR_X0 = 14;                     // arrivals stream-in lane (left edge)
+const ARR_X1 = 150;                    // arrivals merge into queue here
+const QUEUE_X = 165;                   // queue stack anchor
+const QUEUE_W = 150;                   // queue horizontal span (wraps in rows)
+const SEAT_X0 = 360;                   // first agent seat column
+const HANDLED_X = CAN_W - 18;          // exit at right
+
+const FLOW_MID = (FLOW_TOP + FLOW_BOT) / 2;
+
+// Agent seat grid (max 16 seats: 2 cols x 8 rows)
+const SEAT_COLS = 2, SEAT_ROWS = 8;
+const SEAT_W = 58, SEAT_H = 23;
+const SEAT_GAPX = 14, SEAT_GAPY = 5;
+const SEAT_GRID_X = SEAT_X0;
+const SEAT_GRID_Y = FLOW_TOP + 6;
+
+function seatPos(idx) {
+  const col = idx % SEAT_COLS;
+  const row = Math.floor(idx / SEAT_COLS);
+  return {
+    x: SEAT_GRID_X + col * (SEAT_W + SEAT_GAPX),
+    y: SEAT_GRID_Y + row * (SEAT_H + SEAT_GAPY)
+  };
+}
+
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = CAN_W * dpr;
+  canvas.height = CAN_H * dpr;
+  canvas.style.width  = CAN_W + "px";
+  canvas.style.height = CAN_H + "px";
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return ctx;
+}
+
+function fmtClock(min) {
+  const h = Math.floor(min / 60) % 24;
+  const m = Math.floor(min % 60);
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+function fmtInt(v) { return Math.round(v).toLocaleString("en-US"); }
+
+const SL_COLORS = { good: "#2d8a45", warn: "#e6a817", bad: "#b33939" };
+
+function drawCenter(ctx, sim, simNow) {
+  const t = Math.min(simNow, SIM_MIN);
+  const k = sim.kpis();
+
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, 0, CAN_H);
+  grad.addColorStop(0, "#faf6ec");
+  grad.addColorStop(1, "#f0e8d1");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, CAN_W, CAN_H);
+
+  // ---- Top row: clock + peak / night badges ----
+  const h = Math.min(23, Math.floor(t / 60));
+  const rate = HOURLY_RATE[h];
+  ctx.textBaseline = "middle";
+  ctx.font = "bold 10px -apple-system, sans-serif";
+  if (rate >= PEAK_THRESHOLD) {
+    ctx.fillStyle = "#a3334e";
+    ctx.textAlign = "left";
+    ctx.fillText("▲ PEAK DEMAND", 14, 16);
+  } else if (rate < 1.0) {
+    ctx.fillStyle = "#7a86a3";
+    ctx.textAlign = "left";
+    ctx.fillText("☾ OVERNIGHT (light)", 14, 16);
+  }
+  // staffing readout (right)
+  ctx.fillStyle = sim.key === "good" ? "#1f6b34" : "#8b2c2c";
+  ctx.textAlign = "right";
+  ctx.fillText(`${k.busy}/${k.staffN} agents on call`, CAN_W - 14, 16);
+
+  // clock (center)
+  ctx.fillStyle = "#bfae7a";
+  ctx.font = "12px 'Courier New', monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(fmtClock(t), CAN_W / 2, 16);
+
+  // section captions
+  ctx.fillStyle = "#bfae7a";
+  ctx.font = "bold 9px -apple-system, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("ARRIVING", ARR_X0, FLOW_TOP - 6);
+  ctx.fillText("QUEUE", QUEUE_X, FLOW_TOP - 6);
+  ctx.fillText("AGENTS", SEAT_X0, FLOW_TOP - 6);
+
+  // ---- Agent seats ----
+  for (let i = 0; i < GOOD_MAX_AGENTS; i++) {
+    const p = seatPos(i);
+    const a = sim.agents[i];
+    const staffed = i < sim.staffN || (a && a.call !== null);
+    const onCall = a && a.call !== null;
+    // seat box
+    if (!staffed) {
+      // not part of the roster this hour: dashed faint placeholder
+      ctx.fillStyle = "#efe9d6";
+      ctx.strokeStyle = "#c8c1ad";
+      ctx.setLineDash([3, 3]);
+      ctx.lineWidth = 1;
+      roundRect(ctx, p.x, p.y, SEAT_W, SEAT_H, 4);
+      ctx.fill(); ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      ctx.fillStyle = onCall ? "#2d8a45" : "#bdb79f";
+      ctx.strokeStyle = onCall ? "#1f6b34" : "#9b9477";
+      ctx.lineWidth = 1;
+      roundRect(ctx, p.x, p.y, SEAT_W, SEAT_H, 4);
+      ctx.fill(); ctx.stroke();
+      // headset glyph
+      ctx.fillStyle = onCall ? "#eafff0" : "#7a7359";
+      ctx.font = "11px -apple-system, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("🎧", p.x + 13, p.y + SEAT_H / 2);
+      // active call color chip + remaining bar
+      if (onCall) {
+        ctx.fillStyle = TYPE_COLOR[a.call.vt];
+        ctx.beginPath();
+        ctx.arc(p.x + SEAT_W - 12, p.y + SEAT_H / 2, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // ---- Queue (waiting callers) ----
+  // stacked left→right in wrapped rows; near-abandon callers turn red.
+  const QSTACK = 13, QROWW = Math.floor(QUEUE_W / QSTACK);
+  let drawn = 0;
+  const maxVis = QROWW * 6;
+  for (const q of sim.queue) {
+    if (drawn >= maxVis) break;
+    const col = drawn % QROWW;
+    const row = Math.floor(drawn / QROWW);
+    const cx = QUEUE_X + col * QSTACK + 5;
+    const cy = FLOW_TOP + 18 + row * QSTACK;
+    const waited = t - q.joinedAt;
+    const nearAbandon = waited > q.patience * 0.6;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 4.6, 0, Math.PI * 2);
+    ctx.fillStyle = nearAbandon ? "#e74c3c" : TYPE_COLOR[q.vt];
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.8)";
+    ctx.lineWidth = 0.7;
+    ctx.stroke();
+    drawn++;
+  }
+  if (sim.queue.length > maxVis) {
+    ctx.fillStyle = "#b33939";
+    ctx.font = "bold 10px -apple-system, sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText("+" + (sim.queue.length - maxVis) + " waiting", QUEUE_X, FLOW_TOP + 18 + 6 * QSTACK + 8);
+  }
+
+  // ---- Arrivals streaming in from the left ----
+  // Show calls that arrived in the last ~0.8 sim-min sliding toward the queue.
+  ctx.lineWidth = 0.7;
+  ctx.strokeStyle = "rgba(255,255,255,0.8)";
+  for (let i = sim.streamIdx - 1; i >= 0 && i >= sim.streamIdx - 40; i--) {
+    const c = sim.stream[i];
+    const age = t - c.t;
+    if (age < 0 || age > 0.8) continue;
+    const p = age / 0.8;                 // 0 → just arrived (left), 1 → reached queue
+    const x = ARR_X0 + (ARR_X1 - ARR_X0) * p;
+    const y = FLOW_MID + Math.sin(c.id * 1.7) * 26;
+    ctx.beginPath();
+    ctx.arc(x, y, 4.2, 0, Math.PI * 2);
+    ctx.fillStyle = TYPE_COLOR[c.vt];
+    ctx.fill();
+    ctx.stroke();
+  }
+  // little inbound arrow
+  ctx.strokeStyle = "#cdbf94";
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(ARR_X0, FLOW_BOT - 6);
+  ctx.lineTo(ARR_X1 - 8, FLOW_BOT - 6);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(ARR_X1 - 8, FLOW_BOT - 6);
+  ctx.lineTo(ARR_X1 - 13, FLOW_BOT - 9);
+  ctx.lineTo(ARR_X1 - 13, FLOW_BOT - 3);
+  ctx.closePath();
+  ctx.fillStyle = "#cdbf94";
+  ctx.fill();
+
+  // ---- Handled calls leaving right ----
+  for (const d of sim.handledRecent) {
+    const age = t - d.t;
+    if (age < 0 || age > 0.8) continue;
+    const p = age / 0.8;
+    const x = SEAT_X0 + SEAT_W * 2 + SEAT_GAPX + 10 + (HANDLED_X - (SEAT_X0 + SEAT_W * 2)) * p;
+    const y = FLOW_MID + Math.sin(d.t * 9) * 18;
+    ctx.beginPath();
+    ctx.arc(Math.min(x, HANDLED_X), y, 4, 0, Math.PI * 2);
+    ctx.globalAlpha = Math.max(0, 1 - p);
+    ctx.fillStyle = TYPE_COLOR[d.vt];
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  ctx.fillStyle = "#9b9477";
+  ctx.font = "bold 8px -apple-system, sans-serif";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  ctx.fillText("HANDLED →", HANDLED_X, FLOW_TOP - 6);
+
+  // ---- Hourly call-volume curve indicator ----
+  drawVolumeCurve(ctx, t);
+
+  // ---- 24h progress bar ----
+  ctx.fillStyle = "#e6dcc0";
+  roundRect(ctx, 14, BAR_TOP, CAN_W - 28, BAR_BOT - BAR_TOP, 4);
+  ctx.fill();
+  const pct = Math.min(1, t / SIM_MIN);
+  ctx.fillStyle = sim.key === "good" ? "#2d8a45" : "#b33939";
+  roundRect(ctx, 14, BAR_TOP, (CAN_W - 28) * pct, BAR_BOT - BAR_TOP, 4);
+  ctx.fill();
+  // hour ticks
+  ctx.fillStyle = "#8a8062";
+  ctx.font = "8px 'Courier New', monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  for (let hh = 0; hh <= 24; hh += 6) {
+    const x = 14 + (CAN_W - 28) * (hh / 24);
+    ctx.fillText(String(hh).padStart(2, "0"), x, BAR_BOT + 2);
+  }
+}
+
+function drawVolumeCurve(ctx, t) {
+  const x0 = 18, x1 = CAN_W - 18, y0 = CURVE_TOP, y1 = CURVE_BOT;
+  const w = x1 - x0, hgt = y1 - y0;
+  const maxRate = Math.max(...HOURLY_RATE);
+
+  // baseline + frame
+  ctx.fillStyle = "#bfae7a";
+  ctx.font = "bold 9px -apple-system, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("CALLS / HOUR", x0, y0 - 5);
+
+  // area under the curve
+  ctx.beginPath();
+  ctx.moveTo(x0, y1);
+  for (let hh = 0; hh < 24; hh++) {
+    const x = x0 + w * (hh / 23);
+    const y = y1 - hgt * (HOURLY_RATE[hh] / maxRate);
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(x1, y1);
+  ctx.closePath();
+  ctx.fillStyle = "rgba(180,150,80,0.18)";
+  ctx.fill();
+
+  // curve line
+  ctx.beginPath();
+  for (let hh = 0; hh < 24; hh++) {
+    const x = x0 + w * (hh / 23);
+    const y = y1 - hgt * (HOURLY_RATE[hh] / maxRate);
+    if (hh === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = "#b98e3c";
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+
+  // now-marker
+  const hf = Math.min(23, t / 60);
+  const nx = x0 + w * (hf / 23);
+  ctx.strokeStyle = "#2a2a2a";
+  ctx.lineWidth = 1.2;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(nx, y0 - 2);
+  ctx.lineTo(nx, y1);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // now dot on the curve
+  const hh = Math.min(23, Math.floor(t / 60));
+  const ny = y1 - hgt * (HOURLY_RATE[hh] / maxRate);
+  ctx.beginPath();
+  ctx.arc(nx, ny, 3.5, 0, Math.PI * 2);
+  ctx.fillStyle = "#2a2a2a";
+  ctx.fill();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  if (w < 2 * r) r = w / 2;
+  if (h < 2 * r) r = h / 2;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function renderKPIs(elId, sim, otherSim) {
+  const k = sim.kpis();
+  const o = otherSim.kpis();
+
+  function delta(value, otherValue, fmt, betterWhen) {
+    const d = value - otherValue;
+    if (Math.abs(d) < 0.05) return "";
+    const isBetter = (betterWhen === "lower" ? d < 0 : d > 0);
+    const cls = isBetter ? "delta-good" : "delta-bad";
+    const sign = d > 0 ? "+" : "";
+    return ` <span class="${cls}">(${sign}${fmt(d)})</span>`;
+  }
+
+  const slChip = `<span class="sl-chip" style="background:${SL_COLORS[k.slClass]}">${k.sl.toFixed(0)}%</span>`;
+
+  const rows = [
+    ["Arrived",    fmtInt(k.arrived), ""],
+    ["In queue",   `${k.inQueue}`, ""],
+    ["Handled",    fmtInt(k.handled) + delta(k.handled, o.handled, v => fmtInt(v), "higher"), ""],
+    ["Service level", slChip + delta(k.sl, o.sl, v => v.toFixed(0) + "pp", "higher"),
+                   "target 80% in 20s"],
+    ["Abandoned",  k.abandonPct.toFixed(1) + "%" + delta(k.abandonPct, o.abandonPct, v => v.toFixed(1) + "pp", "lower"),
+                   `${fmtInt(k.abandoned)} callers`],
+    ["Avg answer", k.asaSec.toFixed(0) + " s" + delta(k.asaSec, o.asaSec, v => v.toFixed(0) + "s", "lower"), ""],
+    ["Max queue",  `${k.maxQ}` + delta(k.maxQ, o.maxQ, v => v.toFixed(0), "lower"), ""],
+    ["Agents now", `${k.busy}/${k.staffN}`, sim.scn.policy === "dynamic" ? "scales 4–16" : "fixed 7"],
+  ];
+
+  let html = "";
+  for (const [lbl, val, sub] of rows) {
+    html += `<div class="kpi"><span class="kpi-label">${lbl}</span><span class="kpi-value">${val}${sub ? `<br><span class="kpi-proj">${sub}</span>` : ""}</span></div>`;
+  }
+  document.getElementById(elId).innerHTML = html;
+}
+
+// ============================================================
+// Main loop
+// ============================================================
+const SEED = 20260615;   // fixed → deterministic result
+const STEP_MIN = 30;     // size of "1 step" in sim-minutes
+let stream, simBad, simGood, ctxBad, ctxGood;
+let simMinute = 0;
+let lastFrameTime = null;
+let running = true;
+let speedIdx = 1;
+
+function buildAll() {
+  stream  = generateCalls(SEED);
+  simBad  = new CallSim("bad",  stream);
+  simGood = new CallSim("good", stream);
+  ctxBad  = setupCanvas(document.getElementById("canvas-bad"));
+  ctxGood = setupCanvas(document.getElementById("canvas-good"));
+  simMinute = 0;
+  lastFrameTime = null;
+  running = true;
+  document.getElementById("pauseBtn").textContent = "⏸ Pause";
+  document.getElementById("banner-bad").classList.remove("show");
+  document.getElementById("banner-good").classList.remove("show");
+}
+
+// Advance (or rewind+rebuild+replay) both sims to targetMin (deterministic).
+function jumpTo(targetMin) {
+  targetMin = Math.max(0, Math.min(SIM_MIN, targetMin));
+  if (targetMin < simBad.t) {
+    simBad  = new CallSim("bad",  stream);
+    simGood = new CallSim("good", stream);
+  }
+  simBad.advanceTo(targetMin);
+  simGood.advanceTo(targetMin);
+  simMinute = targetMin;
+  if (targetMin < SIM_MIN) {
+    document.getElementById("banner-bad").classList.remove("show");
+    document.getElementById("banner-good").classList.remove("show");
+  }
+}
+
+function tick(now) {
+  if (lastFrameTime === null) lastFrameTime = now;
+  const dt = (now - lastFrameTime) / 1000;
+  lastFrameTime = now;
+
+  if (running && simMinute < SIM_MIN) {
+    const minPerReal = SIM_MIN / REAL_DURATION_SEC;
+    simMinute += dt * minPerReal * SPEEDS[speedIdx];
+    if (simMinute > SIM_MIN) simMinute = SIM_MIN;
+    simBad.advanceTo(simMinute);
+    simGood.advanceTo(simMinute);
+  }
+  drawCenter(ctxBad,  simBad,  simMinute);
+  drawCenter(ctxGood, simGood, simMinute);
+
+  const clockStr = fmtClock(Math.min(simMinute, SIM_MIN));
+  document.getElementById("clock-bad").textContent  = clockStr;
+  document.getElementById("clock-good").textContent = clockStr;
+
+  const progPct = Math.min(100, (simMinute / SIM_MIN) * 100);
+  document.getElementById("prog-bad").style.width  = progPct + "%";
+  document.getElementById("prog-good").style.width = progPct + "%";
+
+  renderKPIs("kpis-bad",  simBad,  simGood);
+  renderKPIs("kpis-good", simGood, simBad);
+
+  if (simMinute >= SIM_MIN) {
+    const bb = document.getElementById("banner-bad");
+    const bg = document.getElementById("banner-good");
+    bb.textContent = "FIXED ROSTERS DROWN AT PEAK — CALLERS GIVE UP";
+    bg.textContent = "STAFFING THAT FOLLOWS DEMAND HITS THE 80/20 TARGET";
+    bb.classList.add("show");
+    bg.classList.add("show");
+  }
+
+  requestAnimationFrame(tick);
+}
+
+// ============================================================
+// Controls
+// ============================================================
+function updateSpeedLabel() {
+  document.getElementById("speedLabel").textContent = SPEEDS[speedIdx].toFixed(1) + "×";
+}
+document.getElementById("speedBtn").addEventListener("click", () => {
+  speedIdx = (speedIdx + 1) % SPEEDS.length;
+  updateSpeedLabel();
+});
+document.getElementById("pauseBtn").addEventListener("click", () => {
+  running = !running;
+  document.getElementById("pauseBtn").textContent = running ? "⏸ Pause" : "▶ Resume";
+});
+document.getElementById("stepFwdBtn").addEventListener("click", () => {
+  running = false;
+  document.getElementById("pauseBtn").textContent = "▶ Resume";
+  jumpTo(Math.round(simMinute) + STEP_MIN);
+});
+document.getElementById("stepBackBtn").addEventListener("click", () => {
+  running = false;
+  document.getElementById("pauseBtn").textContent = "▶ Resume";
+  jumpTo(Math.round(simMinute) - STEP_MIN);
+});
+document.getElementById("resetBtn").addEventListener("click", () => {
+  buildAll();
+});
+
+// Boot
+updateSpeedLabel();
+buildAll();
+requestAnimationFrame(tick);
+</script>
+
+<!-- oux:behavior --><script>
+(function(){
+function ready(fn){if(document.readyState!=="loading"){setTimeout(fn,0);}else{document.addEventListener("DOMContentLoaded",fn);}}
+ready(function(){
+  // --- responsive table wrapping (all templates) ---
+  document.querySelectorAll("table").forEach(function(t){
+    var p=t.parentElement;
+    if(!p)return;
+    if(p.classList&&(p.classList.contains("oux-tbl-wrap")||p.classList.contains("table-responsive")))return;
+    // skip tiny KPI-style tables (<=2 cols and <=2 rows)
+    var cols=t.rows&&t.rows[0]?t.rows[0].cells.length:0;
+    if(cols<=1)return;
+    var w=document.createElement("div");w.className="oux-tbl-wrap";
+    p.insertBefore(w,t);w.appendChild(t);
+  });
+
+});
+})();
+</script><!-- /oux:behavior --></body>
+</html>

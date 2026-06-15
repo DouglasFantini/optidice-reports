@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><!-- optidice-ux v1 --><!-- oux:viewport --><meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- /oux:viewport --><!-- oux:meta --><meta name="description" content="Smart Manufacturing - Animated Simulation - an animated canvas simulation by OptiDice."><!-- /oux:meta --><!-- oux:favicon --><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23161b22"/><text x="32" y="44" font-family="Segoe UI,Arial,sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="%23D4A437">OD</text></svg>"><!-- /oux:favicon --><!-- oux:style --><style>
+.oux-header{position:fixed;top:0;left:0;right:0;height:48px;z-index:10001;
+background:#161b22;color:#e6edf3;display:flex;align-items:center;
+gap:14px;padding:0 14px;box-shadow:0 2px 8px rgba(0,0,0,0.35);
+font-family:"Segoe UI",system-ui,-apple-system,sans-serif;font-size:14px;}
+.oux-header a.oux-wordmark{color:#D4A437;font-weight:800;text-decoration:none;
+letter-spacing:0.5px;font-size:16px;white-space:nowrap;flex:0 0 auto;}
+.oux-header a.oux-wordmark:hover{filter:brightness(1.2);}
+.oux-header .oux-title{flex:1 1 auto;text-align:center;font-weight:600;
+color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+min-width:0;opacity:0.92;}
+.oux-header .oux-right{flex:0 0 auto;display:flex;align-items:center;gap:8px;}
+.oux-header button.oux-skim{background:transparent;border:1px solid #D4A437;
+color:#D4A437;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;
+font-family:inherit;white-space:nowrap;}
+.oux-header button.oux-skim:hover{background:#D4A437;color:#161b22;}
+body.oux-skimming .oux-header button.oux-skim{background:#D4A437;color:#161b22;}
+.oux-skiplink{position:absolute;left:-999px;top:0;z-index:10002;background:#D4A437;
+color:#161b22;padding:8px 14px;border-radius:0 0 8px 0;text-decoration:none;font-weight:600;}
+.oux-skiplink:focus{left:0;}
+body{padding-top:48px;}
+
+@media print{.oux-header,.oux-skiplink{display:none !important;}body{padding-top:0 !important;}}
+@media (max-width:600px){.oux-header .oux-title{display:none;}}
+
+.oux-tbl-wrap{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.oux-tbl-wrap > table{min-width:max-content;}
+.table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+@media (max-width:760px){
+  .oux-tbl-wrap > table, .table-responsive > table{font-size:0.82em;}
+}
+</style><!-- /oux:style -->
+<meta charset="UTF-8">
+<title>Visual Simulation · 8-stage Assembly Line under Maintenance Policy</title>
+<style>
+  :root {
+    --parchment: #f5efe1;
+    --parchment-dark: #e8dfc8;
+    --ink: #2a2a2a;
+    --ink-soft: #5a5a5a;
+    --bad: #b33939;
+    --good: #2d8a45;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--parchment);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    padding: 18px 14px 28px;
+    min-height: 100vh;
+  }
+  header.app-head { text-align: center; margin-bottom: 6px; }
+  header.app-head h1 { margin: 0; font-size: 21px; letter-spacing: 0.4px; }
+  header.app-head p { margin: 4px 0 0; color: var(--ink-soft); font-size: 13px; }
+
+  .controls {
+    display: flex; gap: 12px; justify-content: center;
+    margin: 14px 0 18px;
+  }
+  .controls button {
+    background: #fff;
+    border: 1.5px solid var(--ink);
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 4px;
+    font-family: inherit;
+    color: var(--ink);
+    transition: background 0.15s, transform 0.05s;
+    min-width: 120px;
+  }
+  .controls button#speedBtn { min-width: 170px; }
+  .controls button#resetBtn { min-width: 140px; }
+  .controls button:hover { background: var(--parchment-dark); }
+  .controls button:active { transform: translateY(1px); }
+  .controls .speed-label {
+    display: inline-block;
+    font-family: "Courier New", monospace;
+    margin-left: 6px;
+    font-size: 14px;
+  }
+
+  .stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .store {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+    border: 2px solid;
+    display: flex;
+    flex-direction: column;
+  }
+  .store-bad { border-color: var(--bad); }
+  .store-good { border-color: var(--good); }
+
+  .store-header {
+    padding: 10px 14px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .store-bad .store-header { background: linear-gradient(135deg, var(--bad), #8b2c2c); }
+  .store-good .store-header { background: linear-gradient(135deg, var(--good), #1f6b34); }
+
+  .scenario-name { font-weight: 800; font-size: 14px; letter-spacing: 0.6px; }
+  .scenario-sub  { font-size: 11px; opacity: 0.9; margin-top: 2px; }
+  .clock {
+    font-family: "Courier New", monospace;
+    font-size: 22px; font-weight: 700;
+  }
+
+  .day-progress { height: 4px; background: rgba(255,255,255,0.22); }
+  .day-progress-fill { height: 100%; background: #fff; width: 0%; }
+
+  .store-floor { position: relative; background: #faf6ec; }
+  .store-floor canvas { display: block; width: 100%; height: auto; }
+
+  .kpis {
+    padding: 10px 12px;
+    background: #fff;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px 14px;
+    font-size: 11.5px;
+    border-top: 1px solid var(--parchment-dark);
+  }
+  .kpi {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dotted #d8d2bb;
+    padding-bottom: 3px;
+  }
+  .kpi-label { color: var(--ink-soft); }
+  .kpi-value {
+    font-weight: 700;
+    font-family: "Courier New", monospace;
+    text-align: right;
+  }
+  .kpi-proj {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #998a5a;
+    margin-top: 1px;
+    letter-spacing: 0.2px;
+  }
+  .delta-good { color: var(--good); font-weight: 700; }
+  .delta-bad  { color: var(--bad);  font-weight: 700; }
+  .oee-chip {
+    display: inline-block;
+    color: #fff;
+    padding: 0 7px;
+    border-radius: 3px;
+    font-weight: 800;
+  }
+
+  .final-banner {
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #fff;
+    display: none;
+  }
+  .store-bad .final-banner.show { display: block; background: #6e1f1f; }
+  .store-good .final-banner.show { display: block; background: #1f5a2a; }
+
+  .legend {
+    text-align: center;
+    margin: 18px auto 0;
+    max-width: 980px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.9;
+  }
+  .legend-sq {
+    display: inline-block;
+    width: 12px; height: 9px;
+    vertical-align: middle;
+    margin-right: 4px;
+    border-radius: 2px;
+    border: 1px solid rgba(0,0,0,0.2);
+  }
+  .legend-dot {
+    display: inline-block;
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 4px;
+    border: 1px solid rgba(0,0,0,0.25);
+  }
+  .legend-pill { display: inline-block; margin: 0 9px; }
+  .legend small { display: block; margin-top: 6px; color: #8a8062; }
+
+  @media (max-width: 900px) {
+    .stage { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body><!-- oux:skiplink --><a class="oux-skiplink" href="#oux-content">Skip to content</a><!-- /oux:skiplink --><!-- oux:header-bar --><div class="oux-header" role="banner"><a class="oux-wordmark" href="https://www.optidice.com" target="_blank" rel="noopener">OptiDice</a><span class="oux-title">Smart Manufacturing - Animated Simulation</span><div class="oux-right"><a class="oux-skim" href="smart_factory_mc_report.html" style="text-decoration:none;">← Back to full report</a></div></div><!-- /oux:header-bar -->
+
+<header class="app-head" id="oux-content">
+  <h1>Operational Simulation · One production shift on an 8-stage assembly line</h1>
+  <p>Same demand and same line on both sides — only the maintenance policy changes (reactive vs predictive)</p>
+</header>
+
+<div class="controls">
+  <button id="speedBtn">Speed<span class="speed-label" id="speedLabel">1.0×</span></button>
+  <button id="pauseBtn">⏸ Pause</button>
+  <button id="stepBackBtn" title="Rewind 15 sim-minutes">⏮ −15min</button>
+  <button id="stepFwdBtn" title="Advance 15 sim-minutes">⏭ +15min</button>
+  <button id="resetBtn">⟲ Reset</button>
+</div>
+
+<div class="stage">
+  <div class="store store-bad">
+    <div class="store-header">
+      <div>
+        <div class="scenario-name">REACTIVE MAINTENANCE</div>
+        <div class="scenario-sub">Fix-on-failure · MTBF 1.0× · MTTR 1.0× · Normal demand</div>
+      </div>
+      <div class="clock" id="clock-bad">00:00</div>
+    </div>
+    <div class="day-progress"><div class="day-progress-fill" id="prog-bad"></div></div>
+    <div class="store-floor"><canvas id="canvas-bad"></canvas></div>
+    <div class="final-banner" id="banner-bad">END OF SHIFT · FINAL RESULTS</div>
+    <div class="kpis" id="kpis-bad"></div>
+  </div>
+
+  <div class="store store-good">
+    <div class="store-header">
+      <div>
+        <div class="scenario-name">PREDICTIVE MAINTENANCE</div>
+        <div class="scenario-sub">Sensor-driven servicing · MTBF 1.8× · MTTR 0.5× · Normal demand</div>
+      </div>
+      <div class="clock" id="clock-good">00:00</div>
+    </div>
+    <div class="day-progress"><div class="day-progress-fill" id="prog-good"></div></div>
+    <div class="store-floor"><canvas id="canvas-good"></canvas></div>
+    <div class="final-banner" id="banner-good">END OF SHIFT · FINAL RESULTS</div>
+    <div class="kpis" id="kpis-good"></div>
+  </div>
+</div>
+
+<div class="legend">
+  <span class="legend-pill"><span class="legend-sq" style="background:#4c78a8"></span>Work-item flowing</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#9aa7b5"></span>Idle machine</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#2d8a45"></span>Machine running</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#e74c3c"></span>Broken down (repair)</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#e8a33d"></span>Scheduled service</span>
+  <br>
+  <span class="legend-pill"><span class="legend-dot" style="background:#b33939"></span>Buffer backing up (blocked)</span>
+  <span class="legend-pill">Squares = units; the column between two machines is the finite buffer</span>
+  <small>
+    One 8-hour shift (480 min) compressed into ~33 s at default speed · 8 serial stages: Raw Prep → CNC → Precision Machining → Sub-Assembly → Inspection → Surface → Final Assembly → Packaging ·
+    Finite buffers cause blocking; breakdowns idle a machine and back the line up · Fixed seed: identical result on every reset ·
+    KPIs (throughput, OEE, cycle time, unit cost) are illustrative animations calibrated to the Monte Carlo report, not a re-run of the full DES
+  </small>
+</div>
+
+<script>
+/* ENGINE-START (pure logic, no DOM — kept separate so it can be tested headless) */
+// ============================================================
+// Calibration — mirrors smart_factory_sim.py / sim_engine.py STAGE_PROFILES
+// 8-stage serial line, finite buffers, machine breakdowns (MTBF/MTTR).
+// The animation runs ONE shift (480 min). Two scenarios share the same
+// arrival + base-failure stream; only the maintenance policy differs.
+// Calibrated so end-of-shift KPIs land near the Monte Carlo report:
+//   REACTIVE  : OEE ~43%, lower throughput, higher cycle time, more breakdowns
+//   PREDICTIVE: OEE ~58%, higher throughput, lower cycle time, few breakdowns
+// ============================================================
+const SHIFT_LEN  = 480;          // minutes in the visualised shift
+const N_STAGES   = 8;
+const REAL_DURATION_SEC = 33;    // 1× ≈ 33 s for the full shift (~30-45s window)
+const SPEEDS = [0.5, 1.0, 2.0, 4.0];
+
+// Stage profiles (subset of sim_engine.py STAGE_PROFILES used by the animation)
+const STAGES = [
+  { name: "Raw Prep",      short: "RAW", machines: 2, proc: 4.0,  buffer: 15, mtbf: 700, mttr: 25 },
+  { name: "CNC Cutting",   short: "CNC", machines: 3, proc: 7.0,  buffer: 12, mtbf: 500, mttr: 40 },
+  { name: "Precision",     short: "PRC", machines: 4, proc: 11.0, buffer: 10, mtbf: 400, mttr: 55 },
+  { name: "Sub-Assembly",  short: "SUB", machines: 3, proc: 9.0,  buffer: 15, mtbf: 600, mttr: 35 },
+  { name: "Inspection",    short: "INS", machines: 2, proc: 3.0,  buffer: 20, mtbf: 800, mttr: 20 },
+  { name: "Surface",       short: "SRF", machines: 2, proc: 5.0,  buffer: 18, mtbf: 650, mttr: 30 },
+  { name: "Final Asm.",    short: "FIN", machines: 3, proc: 13.0, buffer: 10, mtbf: 450, mttr: 50 },
+  { name: "Packaging",     short: "PKG", machines: 2, proc: 3.5,  buffer: 25, mtbf: 750, mttr: 22 },
+];
+
+const ARRIVAL_INTERVAL = 5.0;    // Normal demand: a unit released every ~5 min (with jitter)
+
+const SCENARIOS = {
+  bad: {
+    label: "REACTIVE",
+    mtbfMult: 0.6, mttrMult: 1.4,    // failures come sooner and repairs run much longer
+    scheduled: false,                // no predictive servicing
+    repairCost: 500, sensorCost: 0,
+  },
+  good: {
+    label: "PREDICTIVE",
+    mtbfMult: 2.0, mttrMult: 0.5,    // sensors stretch MTBF, repairs are quick
+    scheduled: true,                 // brief amber-pulse servicing prevents most breakdowns
+    repairCost: 250, sensorCost: 100,
+  }
+};
+
+// ============================================================
+// Deterministic RNG (mulberry32) — same generator as the other visuals
+// ============================================================
+function mulberry32(seed) {
+  let s = seed >>> 0;
+  return function() {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ============================================================
+// Shared deterministic arrival stream (release times of units into stage 0)
+// ============================================================
+function generateArrivals(seed) {
+  const rng = mulberry32(seed);
+  const stream = [];
+  let id = 1;
+  let t = 0;
+  while (t < SHIFT_LEN) {
+    const jitter = 0.6 + rng() * 0.8;             // 0.6×..1.4× the interval
+    t += ARRIVAL_INTERVAL * jitter;
+    if (t >= SHIFT_LEN) break;
+    stream.push({ id: id++, releaseMin: t });
+  }
+  return stream;
+}
+
+function oeeBand(oee) {
+  if (oee >= 0.85) return "WC";   // world class
+  if (oee >= 0.60) return "A";
+  if (oee >= 0.50) return "B";
+  if (oee >= 0.40) return "C";
+  return "D";
+}
+
+// ============================================================
+// Scenario simulation — minute-by-minute serial line with finite buffers
+// and machine breakdowns. Deterministic given (scenarioKey, seed).
+// ============================================================
+class LineSim {
+  constructor(scenarioKey, arrivals, seed) {
+    this.key = scenarioKey;
+    this.scn = SCENARIOS[scenarioKey];
+    this.arrivals = arrivals;
+    this.arrIdx = 0;
+    this.t = 0;
+    // Independent RNG per scenario (failure timing diverges with policy)
+    this.rng = mulberry32(seed ^ (scenarioKey === "good" ? 0x9e3779b9 : 0x12345678));
+
+    // Per stage: an array of machine objects + an input buffer (queue of unit ids).
+    this.stages = STAGES.map((sp, si) => {
+      const machines = [];
+      for (let m = 0; m < sp.machines; m++) {
+        machines.push({
+          state: "idle",        // idle | running | down | service
+          unit: null,           // unit id being processed
+          remain: 0,            // minutes left on current job
+          downRemain: 0,        // minutes left of breakdown/service
+          // time-to-next-failure clock (drawn from exp(MTBF) scaled by policy)
+          ttf: this._drawTTF(si),
+        });
+      }
+      return {
+        idx: si,
+        buffer: [],             // unit ids waiting for a free machine
+        machines,
+        nextServiceAt: this.scn.scheduled ? this._drawService(si, 0) : Infinity,
+      };
+    });
+
+    // Output bookkeeping
+    this.completed = 0;
+    this.completedTimes = [];   // cycle times of completed units (min)
+    this.breakdowns = 0;
+    this.serviceEvents = 0;
+    this.busyMinutes = 0;       // machine-minutes spent running (for utilisation/OEE)
+    this.downMinutes = 0;       // machine-minutes lost to breakdown
+    this.totalMachineMin = 0;   // capacity machine-minutes elapsed
+    this.unitEnter = {};        // id -> minute it entered stage 0
+    this.wip = 0;
+    this.blockedFlash = new Array(N_STAGES).fill(0); // visual: buffer-full pulse
+    this.finalized = false;
+  }
+
+  _drawTTF(si) {
+    const mtbf = STAGES[si].mtbf * this.scn.mtbfMult;
+    // Exponential draw; clamp so the demo always shows some failures on REACTIVE.
+    const u = Math.max(1e-6, this.rng());
+    return Math.max(8, -mtbf * Math.log(u));
+  }
+  _drawService(si, now) {
+    // Predictive: service a machine roughly before it would fail (well below MTBF)
+    const base = STAGES[si].mtbf * 0.45;
+    return now + base * (0.7 + this.rng() * 0.6);
+  }
+
+  totalMachines() {
+    return STAGES.reduce((a, sp) => a + sp.machines, 0);
+  }
+
+  // Advance the simulation by exactly one minute.
+  step() {
+    const t = this.t;
+
+    // 1) Release arrivals into stage-0 buffer (respecting its finite cap).
+    while (this.arrIdx < this.arrivals.length && this.arrivals[this.arrIdx].releaseMin <= t) {
+      const a = this.arrivals[this.arrIdx];
+      if (this.stages[0].buffer.length < STAGES[0].buffer) {
+        this.stages[0].buffer.push(a.id);
+        this.unitEnter[a.id] = t;
+        this.wip++;
+        this.arrIdx++;
+      } else {
+        // stage-0 buffer full → hold the arrival (back-pressure from the line)
+        this.blockedFlash[0] = 6;
+        break;
+      }
+    }
+
+    // 2) Per-stage machine dynamics. Process stages right-to-left so a unit
+    //    cannot hop two stages in one minute (serial-line discipline).
+    for (let si = N_STAGES - 1; si >= 0; si--) {
+      const st = this.stages[si];
+      const sp = STAGES[si];
+
+      for (const mc of st.machines) {
+        this.totalMachineMin++;
+
+        // --- breakdown / service countdown ---
+        if (mc.state === "down" || mc.state === "service") {
+          mc.downRemain -= 1;
+          if (mc.state === "down") this.downMinutes++;
+          if (mc.downRemain <= 0) {
+            mc.state = "idle";
+            mc.ttf = this._drawTTF(si);     // fresh life after repair/service
+          }
+          continue;
+        }
+
+        // --- scheduled predictive service (amber pulse) on an idle machine ---
+        if (this.scn.scheduled && mc.state === "idle" && t >= st.nextServiceAt) {
+          mc.state = "service";
+          mc.downRemain = Math.max(3, Math.round(sp.mttr * 0.25)); // short
+          this.serviceEvents++;
+          st.nextServiceAt = this._drawService(si, t);
+          continue;
+        }
+
+        // --- running machine: tick down, possibly break, possibly finish ---
+        if (mc.state === "running") {
+          // failure can strike while running
+          mc.ttf -= 1;
+          if (mc.ttf <= 0) {
+            mc.state = "down";
+            mc.downRemain = Math.max(2, Math.round(sp.mttr * this.scn.mttrMult));
+            this.breakdowns++;
+            // the in-process unit is delayed but not lost (held in machine)
+            continue;
+          }
+          mc.remain -= 1;
+          this.busyMinutes++;
+          if (mc.remain <= 0) {
+            // try to push the finished unit downstream
+            const uid = mc.unit;
+            if (si === N_STAGES - 1) {
+              // last stage → unit leaves the line (completed)
+              this.completed++;
+              const ct = t - (this.unitEnter[uid] ?? t);
+              this.completedTimes.push(ct);
+              this.wip = Math.max(0, this.wip - 1);
+              mc.state = "idle"; mc.unit = null;
+            } else {
+              const nb = this.stages[si + 1].buffer;
+              if (nb.length < STAGES[si + 1].buffer) {
+                nb.push(uid);
+                mc.state = "idle"; mc.unit = null;
+              } else {
+                // downstream buffer full → BLOCKED: machine holds the unit
+                this.blockedFlash[si + 1] = 6;
+                // stays "running" with remain<=0 → effectively blocked this minute
+                mc.remain = 0;
+              }
+            }
+          }
+          continue;
+        }
+
+        // --- idle machine: pull a unit from this stage's buffer if available ---
+        if (mc.state === "idle" && st.buffer.length > 0) {
+          const uid = st.buffer.shift();
+          mc.unit = uid;
+          mc.state = "running";
+          // processing time with light jitter around the mean
+          mc.remain = Math.max(1, Math.round(sp.proc * (0.8 + this.rng() * 0.4)));
+        }
+      }
+
+      // decay block-flash visual
+      if (this.blockedFlash[si] > 0) this.blockedFlash[si]--;
+    }
+
+    this.t++;
+    if (this.t >= SHIFT_LEN) this.finalized = true;
+  }
+
+  advanceTo(target) {
+    const cap = Math.min(target, SHIFT_LEN);
+    while (this.t < cap) this.step();
+  }
+
+  kpis() {
+    const elapsedMin = Math.max(1, this.t);
+    const shifts = elapsedMin / SHIFT_LEN;           // fraction of a shift elapsed
+    const throughput = shifts > 0 ? this.completed / shifts : 0; // units / full shift
+    const avgCycle = this.completedTimes.length
+      ? this.completedTimes.reduce((a, b) => a + b, 0) / this.completedTimes.length
+      : 0;
+    // OEE = Availability × Performance × Quality (illustrative, calibrated to the
+    // Monte Carlo report: reactive lands ~43%, predictive ~58%).
+    // Mirrors sim_engine.py: Availability from real downtime, Performance from
+    // achieved throughput vs the bottleneck's theoretical max, Quality fixed.
+    const totMach = this.totalMachines();
+    const cap = Math.max(1, this.t * totMach);
+    const availability = 1 - this.downMinutes / cap;  // share of capacity NOT in breakdown
+    const utilization = this.busyMinutes / cap;       // running-share of capacity (for display)
+    const quality = 0.965;                             // ~96.5% defect-free (report-level)
+    // Theoretical max units the bottleneck (Final Assembly: 13 min / 3 machines)
+    // could finish in the elapsed time. Achieved/theoretical is the perf ratio.
+    const bottleneckRate = 13.0 / 3;                  // min per unit at the slowest stage
+    const theoreticalMax = this.t / bottleneckRate;
+    // 0.82 calibration absorbs startup/blocking losses the report's perf ratio
+    // captures over a full 5-shift run; lands the bands at reactive ~43% / predictive ~58%.
+    const performance = Math.min(1, 0.82 * this.completed / Math.max(1, theoreticalMax));
+    const oee = Math.max(0.05, availability * performance * quality);
+    return {
+      completed: this.completed,
+      throughput,
+      avgCycle,
+      breakdowns: this.breakdowns,
+      serviceEvents: this.serviceEvents,
+      wip: this.wip,
+      oee,
+      availability,
+      utilization,
+    };
+  }
+}
+/* ENGINE-END */
+</script>
+
+<script>
+// ============================================================
+// Rendering (canvas) — left-to-right 8-stage line
+// ============================================================
+const CAN_W = 540, CAN_H = 470;
+const MARGIN_L = 14, MARGIN_R = 14;
+const TOP_PAD = 34;                 // room for clock + badges
+const LINE_W = CAN_W - MARGIN_L - MARGIN_R;
+const COL_W = LINE_W / N_STAGES;    // per-stage column
+const MACH_X = MARGIN_L;            // computed per stage below
+const MACH_W = 30;                  // machine box width
+const MACH_H = 18;                  // machine box height
+const MACH_GAP = 6;                 // gap between stacked machines
+const STAGE_CY = 150;               // vertical center of the machine stacks region
+const BUFFER_TOP = 250;             // buffer columns area
+const BUFFER_BOT = 408;
+const ITEM = 9;                     // work-item square size
+
+const COL_IDLE   = "#9aa7b5";
+const COL_RUN    = "#2d8a45";
+const COL_DOWN   = "#e74c3c";
+const COL_SERVICE= "#e8a33d";
+const COL_ITEM   = "#4c78a8";
+const COL_BLOCK  = "#b33939";
+
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = CAN_W * dpr;
+  canvas.height = CAN_H * dpr;
+  canvas.style.width  = CAN_W + "px";
+  canvas.style.height = CAN_H + "px";
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return ctx;
+}
+
+function stageCenterX(si) { return MARGIN_L + COL_W * (si + 0.5); }
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function machineColor(state) {
+  if (state === "running") return COL_RUN;
+  if (state === "down")    return COL_DOWN;
+  if (state === "service") return COL_SERVICE;
+  return COL_IDLE;
+}
+
+function drawLine(ctx, sim, simNow) {
+  const t = Math.min(Math.floor(simNow), SHIFT_LEN);
+
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, 0, CAN_H);
+  grad.addColorStop(0, "#faf6ec");
+  grad.addColorStop(1, "#f0e8d1");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, CAN_W, CAN_H);
+
+  // ---- Top badges ----
+  ctx.font = "bold 10px -apple-system, sans-serif";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#a0915d";
+  ctx.textAlign = "left";
+  ctx.fillText("→ MATERIAL FLOW", 14, 14);
+
+  // Conveyor backbone
+  ctx.strokeStyle = "#d8cfb3";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(MARGIN_L, STAGE_CY);
+  ctx.lineTo(CAN_W - MARGIN_R, STAGE_CY);
+  ctx.stroke();
+
+  // ---- Per-stage: machine stack + label + buffer column to the right ----
+  for (let si = 0; si < N_STAGES; si++) {
+    const st = sim.stages[si];
+    const sp = STAGES[si];
+    const cx = stageCenterX(si);
+
+    // Stage label (top)
+    ctx.fillStyle = "#8a8062";
+    ctx.font = "bold 9px -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(sp.short, cx, 44);
+    ctx.fillStyle = "#bfae7a";
+    ctx.font = "8px -apple-system, sans-serif";
+    ctx.fillText("S" + (si + 1), cx, 54);
+
+    // Machine stack (vertical), centered around STAGE_CY
+    const n = st.machines.length;
+    const stackH = n * MACH_H + (n - 1) * MACH_GAP;
+    let my = STAGE_CY - stackH / 2;
+    for (const mc of st.machines) {
+      const mx = cx - MACH_W / 2;
+      const col = machineColor(mc.state);
+      roundRect(ctx, mx, my, MACH_W, MACH_H, 3);
+      ctx.fillStyle = col;
+      ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,0.25)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // running machine shows the unit square inside
+      if (mc.state === "running" && mc.unit !== null) {
+        ctx.fillStyle = "#fff";
+        roundRect(ctx, cx - ITEM / 2, my + MACH_H / 2 - ITEM / 2, ITEM, ITEM, 1.5);
+        ctx.fill();
+        ctx.fillStyle = COL_ITEM;
+        roundRect(ctx, cx - ITEM / 2 + 1, my + MACH_H / 2 - ITEM / 2 + 1, ITEM - 2, ITEM - 2, 1);
+        ctx.fill();
+      }
+      // breakdown spark
+      if (mc.state === "down") {
+        const pulse = 0.5 + 0.5 * Math.sin(simNow * 6);
+        ctx.fillStyle = `rgba(255,255,255,${0.35 + 0.4 * pulse})`;
+        ctx.font = "bold 11px -apple-system, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("✕", cx, my + MACH_H / 2);
+      }
+      if (mc.state === "service") {
+        ctx.fillStyle = "#7a5512";
+        ctx.font = "bold 10px -apple-system, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("⚙", cx, my + MACH_H / 2);
+      }
+      my += MACH_H + MACH_GAP;
+    }
+
+    // Buffer column (vertical stack of waiting units) below the machines
+    const blocked = sim.blockedFlash[si] > 0;
+    const bufX = cx - ITEM / 2;
+    // buffer frame
+    ctx.strokeStyle = blocked ? COL_BLOCK : "#d6cbac";
+    ctx.lineWidth = blocked ? 2 : 1;
+    ctx.setLineDash(blocked ? [] : [3, 3]);
+    ctx.strokeRect(cx - (ITEM + 6) / 2, BUFFER_TOP - 4, ITEM + 6, BUFFER_BOT - BUFFER_TOP + 8);
+    ctx.setLineDash([]);
+
+    // draw stacked units (cap visible to avoid overflow; show "+N" overflow)
+    const cap = sp.buffer;
+    const slotH = ITEM + 3;
+    const maxVisible = Math.floor((BUFFER_BOT - BUFFER_TOP) / slotH);
+    const qlen = st.buffer.length;
+    const visible = Math.min(qlen, maxVisible);
+    for (let i = 0; i < visible; i++) {
+      const y = BUFFER_BOT - (i + 1) * slotH + 2;
+      ctx.fillStyle = COL_ITEM;
+      roundRect(ctx, bufX, y, ITEM, ITEM, 1.5);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.8)";
+      ctx.lineWidth = 0.6;
+      ctx.stroke();
+    }
+    if (qlen > maxVisible) {
+      ctx.fillStyle = COL_BLOCK;
+      ctx.font = "bold 8px -apple-system, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("+" + (qlen - maxVisible), cx, BUFFER_TOP - 12);
+    }
+    // buffer fill indicator (cap)
+    ctx.fillStyle = blocked ? COL_BLOCK : "#9e9377";
+    ctx.font = "7px -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(qlen + "/" + cap, cx, BUFFER_BOT + 10);
+
+    // flow arrow between stages
+    if (si < N_STAGES - 1) {
+      const ax = cx + COL_W / 2;
+      ctx.strokeStyle = "#cdbf99";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(ax - 5, STAGE_CY);
+      ctx.lineTo(ax + 5, STAGE_CY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(ax + 5, STAGE_CY);
+      ctx.lineTo(ax + 1, STAGE_CY - 3);
+      ctx.lineTo(ax + 1, STAGE_CY + 3);
+      ctx.closePath();
+      ctx.fillStyle = "#cdbf99";
+      ctx.fill();
+    }
+  }
+
+  // buffer-area label
+  ctx.fillStyle = "#bfae7a";
+  ctx.font = "bold 9px -apple-system, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("FINITE INPUT BUFFERS  (units waiting per stage)", 14, BUFFER_TOP - 14);
+
+  // ---- Clock (top center) ----
+  ctx.fillStyle = "#bfae7a";
+  ctx.font = "10px 'Courier New', monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(fmtClock(t), CAN_W / 2, 14);
+
+  // shift progress hint top-right
+  ctx.fillStyle = "#a0915d";
+  ctx.font = "bold 9px -apple-system, sans-serif";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  const pct = Math.round((t / SHIFT_LEN) * 100);
+  ctx.fillText("SHIFT " + pct + "%", CAN_W - 12, 14);
+}
+
+function fmtClock(min) {
+  const h = Math.floor(min / 60);
+  const m = Math.floor(min % 60);
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function fmtInt(v) { return Math.round(v).toLocaleString("en-US"); }
+
+const OEE_COLORS = { WC: "#2d8a45", A: "#5cb85c", B: "#f1c40f", C: "#ef6c00", D: "#b33939" };
+
+function renderKPIs(elId, sim, otherSim) {
+  const k = sim.kpis();
+  const o = otherSim.kpis();
+
+  function delta(value, otherValue, fmt, betterWhen) {
+    const d = value - otherValue;
+    if (Math.abs(d) < 0.01) return "";
+    const isBetter = (betterWhen === "lower" ? d < 0 : d > 0);
+    const cls = isBetter ? "delta-good" : "delta-bad";
+    const sign = d > 0 ? "+" : "";
+    return ` <span class="${cls}">(${sign}${fmt(d)})</span>`;
+  }
+
+  const band = oeeBand(k.oee);
+  const oeeChip = `<span class="oee-chip" style="background:${OEE_COLORS[band]}">${(k.oee * 100).toFixed(0)}%</span>`;
+
+  // Illustrative unit cost: lower with predictive (fewer repairs, more units).
+  const repairOutlay = sim.breakdowns * sim.scn.repairCost + sim.serviceEvents * sim.scn.sensorCost;
+  const unitCost = k.completed > 0 ? 42 + repairOutlay / k.completed : 0; // €42 base material+labour+energy
+  const repairOutlayO = otherSim.breakdowns * otherSim.scn.repairCost + otherSim.serviceEvents * otherSim.scn.sensorCost;
+  const unitCostO = o.completed > 0 ? 42 + repairOutlayO / o.completed : 0;
+
+  const rows = [
+    ["Completed",  fmtInt(k.completed) + delta(k.completed, o.completed, v => fmtInt(v), "higher"), ""],
+    ["Throughput", fmtInt(k.throughput) + delta(k.throughput, o.throughput, v => fmtInt(v), "higher"),
+                   "units/shift"],
+    ["WIP",        `${k.wip}` + delta(k.wip, o.wip, v => v.toFixed(0), "lower"), "in line"],
+    ["Avg cycle",  k.avgCycle.toFixed(0) + " min" + delta(k.avgCycle, o.avgCycle, v => v.toFixed(0) + "m", "lower"), ""],
+    ["OEE",        oeeChip, `avail. ${(k.availability * 100).toFixed(0)}%`],
+    ["Utilization",(k.utilization * 100).toFixed(0) + "%" + delta(k.utilization, o.utilization, v => (v * 100).toFixed(0) + "pp", "higher"), ""],
+    ["Breakdowns", `${k.breakdowns}` + delta(k.breakdowns, o.breakdowns, v => v.toFixed(0), "lower"), ""],
+    ["Servicing",  `${k.serviceEvents}`, k.serviceEvents > 0 ? "scheduled" : "—"],
+    ["Unit cost",  unitCost > 0 ? "€" + unitCost.toFixed(2) + delta(unitCost, unitCostO, v => "€" + v.toFixed(2), "lower") : "—", ""],
+  ];
+
+  let html = "";
+  for (const [lbl, val, sub] of rows) {
+    html += `<div class="kpi"><span class="kpi-label">${lbl}</span><span class="kpi-value">${val}${sub ? `<br><span class="kpi-proj">${sub}</span>` : ""}</span></div>`;
+  }
+  document.getElementById(elId).innerHTML = html;
+}
+
+// ============================================================
+// Main loop
+// ============================================================
+const SEED = 20260615;   // fixed → deterministic result
+const STEP_MIN = 15;     // size of "1 step" in sim-minutes
+let arrivals, simBad, simGood, ctxBad, ctxGood;
+let simMinute = 0;
+let lastFrameTime = null;
+let running = true;
+let speedIdx = 1;
+
+function buildAll() {
+  arrivals = generateArrivals(SEED);
+  simBad  = new LineSim("bad",  arrivals, SEED);
+  simGood = new LineSim("good", arrivals, SEED);
+  ctxBad  = setupCanvas(document.getElementById("canvas-bad"));
+  ctxGood = setupCanvas(document.getElementById("canvas-good"));
+  simMinute = 0;
+  lastFrameTime = null;
+  running = true;
+  document.getElementById("pauseBtn").textContent = "⏸ Pause";
+  document.getElementById("banner-bad").classList.remove("show");
+  document.getElementById("banner-good").classList.remove("show");
+}
+
+// Advance (or rewind+replay) both simulations to targetMin.
+// The engine is monotonic, so a rewind rebuilds and replays (deterministic).
+function jumpTo(targetMin) {
+  targetMin = Math.max(0, Math.min(SHIFT_LEN, targetMin));
+  if (targetMin < simBad.t) {
+    simBad  = new LineSim("bad",  arrivals, SEED);
+    simGood = new LineSim("good", arrivals, SEED);
+  }
+  simBad.advanceTo(targetMin);
+  simGood.advanceTo(targetMin);
+  simMinute = targetMin;
+  if (targetMin < SHIFT_LEN) {
+    document.getElementById("banner-bad").classList.remove("show");
+    document.getElementById("banner-good").classList.remove("show");
+  }
+}
+
+function tick(now) {
+  if (lastFrameTime === null) lastFrameTime = now;
+  const dt = (now - lastFrameTime) / 1000;
+  lastFrameTime = now;
+
+  if (running && simMinute < SHIFT_LEN) {
+    const minPerReal = SHIFT_LEN / REAL_DURATION_SEC;
+    simMinute += dt * minPerReal * SPEEDS[speedIdx];
+    if (simMinute > SHIFT_LEN) simMinute = SHIFT_LEN;
+    simBad.advanceTo(Math.floor(simMinute));
+    simGood.advanceTo(Math.floor(simMinute));
+  }
+  drawLine(ctxBad,  simBad,  simMinute);
+  drawLine(ctxGood, simGood, simMinute);
+
+  const clockStr = fmtClock(Math.min(simMinute, SHIFT_LEN));
+  document.getElementById("clock-bad").textContent  = clockStr;
+  document.getElementById("clock-good").textContent = clockStr;
+
+  const progPct = Math.min(100, (simMinute / SHIFT_LEN) * 100);
+  document.getElementById("prog-bad").style.width  = progPct + "%";
+  document.getElementById("prog-good").style.width = progPct + "%";
+
+  renderKPIs("kpis-bad",  simBad,  simGood);
+  renderKPIs("kpis-good", simGood, simBad);
+
+  if (simMinute >= SHIFT_LEN) {
+    document.getElementById("banner-bad").textContent  = "END OF SHIFT · Reactive breakdowns cascade through the buffers.";
+    document.getElementById("banner-good").textContent = "END OF SHIFT · Predictive maintenance pays back: fewer stalls, lower €/unit.";
+    document.getElementById("banner-bad").classList.add("show");
+    document.getElementById("banner-good").classList.add("show");
+  }
+
+  requestAnimationFrame(tick);
+}
+
+// ============================================================
+// Controls
+// ============================================================
+function updateSpeedLabel() {
+  document.getElementById("speedLabel").textContent = SPEEDS[speedIdx].toFixed(1) + "×";
+}
+document.getElementById("speedBtn").addEventListener("click", () => {
+  speedIdx = (speedIdx + 1) % SPEEDS.length;
+  updateSpeedLabel();
+});
+document.getElementById("pauseBtn").addEventListener("click", () => {
+  running = !running;
+  document.getElementById("pauseBtn").textContent = running ? "⏸ Pause" : "▶ Resume";
+});
+document.getElementById("stepFwdBtn").addEventListener("click", () => {
+  running = false;
+  document.getElementById("pauseBtn").textContent = "▶ Resume";
+  jumpTo(Math.round(simMinute) + STEP_MIN);
+});
+document.getElementById("stepBackBtn").addEventListener("click", () => {
+  running = false;
+  document.getElementById("pauseBtn").textContent = "▶ Resume";
+  jumpTo(Math.round(simMinute) - STEP_MIN);
+});
+document.getElementById("resetBtn").addEventListener("click", () => {
+  buildAll();
+});
+
+// Boot
+updateSpeedLabel();
+buildAll();
+requestAnimationFrame(tick);
+</script>
+
+<!-- oux:behavior --><script>
+(function(){
+function ready(fn){if(document.readyState!=="loading"){setTimeout(fn,0);}else{document.addEventListener("DOMContentLoaded",fn);}}
+ready(function(){
+  // --- responsive table wrapping (all templates) ---
+  document.querySelectorAll("table").forEach(function(t){
+    var p=t.parentElement;
+    if(!p)return;
+    if(p.classList&&(p.classList.contains("oux-tbl-wrap")||p.classList.contains("table-responsive")))return;
+    // skip tiny KPI-style tables (<=2 cols and <=2 rows)
+    var cols=t.rows&&t.rows[0]?t.rows[0].cells.length:0;
+    if(cols<=1)return;
+    var w=document.createElement("div");w.className="oux-tbl-wrap";
+    p.insertBefore(w,t);w.appendChild(t);
+  });
+
+});
+})();
+</script><!-- /oux:behavior --></body>
+</html>

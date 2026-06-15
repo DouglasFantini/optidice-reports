@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><!-- optidice-ux v1 --><!-- oux:viewport --><meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- /oux:viewport --><!-- oux:meta --><meta name="description" content="Emergency Department - Animated Simulation - an animated canvas simulation by OptiDice."><!-- /oux:meta --><!-- oux:favicon --><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23161b22"/><text x="32" y="44" font-family="Segoe UI,Arial,sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="%23D4A437">OD</text></svg>"><!-- /oux:favicon --><!-- oux:style --><style>
+.oux-header{position:fixed;top:0;left:0;right:0;height:48px;z-index:10001;
+background:#161b22;color:#e6edf3;display:flex;align-items:center;
+gap:14px;padding:0 14px;box-shadow:0 2px 8px rgba(0,0,0,0.35);
+font-family:"Segoe UI",system-ui,-apple-system,sans-serif;font-size:14px;}
+.oux-header a.oux-wordmark{color:#D4A437;font-weight:800;text-decoration:none;
+letter-spacing:0.5px;font-size:16px;white-space:nowrap;flex:0 0 auto;}
+.oux-header a.oux-wordmark:hover{filter:brightness(1.2);}
+.oux-header .oux-title{flex:1 1 auto;text-align:center;font-weight:600;
+color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+min-width:0;opacity:0.92;}
+.oux-header .oux-right{flex:0 0 auto;display:flex;align-items:center;gap:8px;}
+.oux-header button.oux-skim{background:transparent;border:1px solid #D4A437;
+color:#D4A437;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;
+font-family:inherit;white-space:nowrap;}
+.oux-header button.oux-skim:hover{background:#D4A437;color:#161b22;}
+body.oux-skimming .oux-header button.oux-skim{background:#D4A437;color:#161b22;}
+.oux-skiplink{position:absolute;left:-999px;top:0;z-index:10002;background:#D4A437;
+color:#161b22;padding:8px 14px;border-radius:0 0 8px 0;text-decoration:none;font-weight:600;}
+.oux-skiplink:focus{left:0;}
+body{padding-top:48px;}
+
+@media print{.oux-header,.oux-skiplink{display:none !important;}body{padding-top:0 !important;}}
+@media (max-width:600px){.oux-header .oux-title{display:none;}}
+
+.oux-tbl-wrap{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.oux-tbl-wrap > table{min-width:max-content;}
+.table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+@media (max-width:760px){
+  .oux-tbl-wrap > table, .table-responsive > table{font-size:0.82em;}
+}
+</style><!-- /oux:style -->
+<meta charset="UTF-8">
+<title>Visual Simulation · Emergency Department under a 24h Shift</title>
+<style>
+  :root {
+    --parchment: #f5efe1;
+    --parchment-dark: #e8dfc8;
+    --ink: #2a2a2a;
+    --ink-soft: #5a5a5a;
+    --bad: #b33939;
+    --good: #2d8a45;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--parchment);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    padding: 18px 14px 28px;
+    min-height: 100vh;
+  }
+  header.app-head { text-align: center; margin-bottom: 6px; }
+  header.app-head h1 { margin: 0; font-size: 21px; letter-spacing: 0.4px; }
+  header.app-head p { margin: 4px 0 0; color: var(--ink-soft); font-size: 13px; }
+
+  .controls {
+    display: flex; gap: 12px; justify-content: center;
+    margin: 14px 0 18px;
+  }
+  .controls button {
+    background: #fff;
+    border: 1.5px solid var(--ink);
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 4px;
+    font-family: inherit;
+    color: var(--ink);
+    transition: background 0.15s, transform 0.05s;
+    min-width: 120px;
+  }
+  .controls button#speedBtn { min-width: 170px; }
+  .controls button#resetBtn { min-width: 140px; }
+  .controls button:hover { background: var(--parchment-dark); }
+  .controls button:active { transform: translateY(1px); }
+  .controls .speed-label {
+    display: inline-block;
+    font-family: "Courier New", monospace;
+    margin-left: 6px;
+    font-size: 14px;
+  }
+
+  .stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .store {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+    border: 2px solid;
+    display: flex;
+    flex-direction: column;
+  }
+  .store-bad { border-color: var(--bad); }
+  .store-good { border-color: var(--good); }
+
+  .store-header {
+    padding: 10px 14px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .store-bad .store-header { background: linear-gradient(135deg, var(--bad), #8b2c2c); }
+  .store-good .store-header { background: linear-gradient(135deg, var(--good), #1f6b34); }
+
+  .scenario-name { font-weight: 800; font-size: 14px; letter-spacing: 0.6px; }
+  .scenario-sub  { font-size: 11px; opacity: 0.9; margin-top: 2px; }
+  .clock {
+    font-family: "Courier New", monospace;
+    font-size: 22px; font-weight: 700;
+  }
+
+  .day-progress { height: 4px; background: rgba(255,255,255,0.22); }
+  .day-progress-fill { height: 100%; background: #fff; width: 0%; }
+
+  .store-floor { position: relative; background: #faf6ec; }
+  .store-floor canvas { display: block; width: 100%; height: auto; }
+
+  .kpis {
+    padding: 10px 12px;
+    background: #fff;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px 14px;
+    font-size: 11.5px;
+    border-top: 1px solid var(--parchment-dark);
+  }
+  .kpi {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dotted #d8d2bb;
+    padding-bottom: 3px;
+  }
+  .kpi-label { color: var(--ink-soft); }
+  .kpi-value {
+    font-weight: 700;
+    font-family: "Courier New", monospace;
+    text-align: right;
+  }
+  .kpi-proj {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #998a5a;
+    margin-top: 1px;
+    letter-spacing: 0.2px;
+  }
+  .delta-good { color: var(--good); font-weight: 700; }
+  .delta-bad  { color: var(--bad);  font-weight: 700; }
+  .esi-chip {
+    display: inline-block;
+    color: #fff;
+    padding: 0 7px;
+    border-radius: 3px;
+    font-weight: 800;
+  }
+
+  .final-banner {
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #fff;
+    display: none;
+  }
+  .store-bad .final-banner.show { display: block; background: #6e1f1f; }
+  .store-good .final-banner.show { display: block; background: #1f5a2a; }
+
+  .legend {
+    text-align: center;
+    margin: 18px auto 0;
+    max-width: 980px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.9;
+  }
+  .legend-sq {
+    display: inline-block;
+    width: 12px; height: 9px;
+    vertical-align: middle;
+    margin-right: 4px;
+    border-radius: 2px;
+    border: 1px solid rgba(0,0,0,0.2);
+  }
+  .legend-dot {
+    display: inline-block;
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 4px;
+    border: 1px solid rgba(0,0,0,0.25);
+  }
+  .legend-pill { display: inline-block; margin: 0 9px; }
+  .legend small { display: block; margin-top: 6px; color: #8a8062; }
+
+  @media (max-width: 900px) {
+    .stage { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body><!-- oux:skiplink --><a class="oux-skiplink" href="#oux-content">Skip to content</a><!-- /oux:skiplink --><!-- oux:header-bar --><div class="oux-header" role="banner"><a class="oux-wordmark" href="https://www.optidice.com" target="_blank" rel="noopener">OptiDice</a><span class="oux-title">Emergency Department - Animated Simulation</span><div class="oux-right"><a class="oux-skim" href="ed_patient_flow_report.html" style="text-decoration:none;">← Back to full report</a></div></div><!-- /oux:header-bar -->
+
+<header class="app-head" id="oux-content">
+  <h1>Operational Simulation · One 24-hour shift in an Emergency Department</h1>
+  <p>Same patient arrivals on both sides — only the staffing level (doctors &amp; treatment rooms) changes</p>
+</header>
+
+<div class="controls">
+  <button id="speedBtn">Speed<span class="speed-label" id="speedLabel">1.0×</span></button>
+  <button id="pauseBtn">⏸ Pause</button>
+  <button id="stepBackBtn" title="Rewind 30 sim-minutes">⏮ −30min</button>
+  <button id="stepFwdBtn" title="Advance 30 sim-minutes">⏭ +30min</button>
+  <button id="resetBtn">⟲ Reset</button>
+</div>
+
+<div class="stage">
+  <div class="store store-bad">
+    <div class="store-header">
+      <div>
+        <div class="scenario-name">UNDERSTAFFED</div>
+        <div class="scenario-sub">Minimal Plan · 4 doctors · 6 treatment rooms</div>
+      </div>
+      <div class="clock" id="clock-bad">00:00</div>
+    </div>
+    <div class="day-progress"><div class="day-progress-fill" id="prog-bad"></div></div>
+    <div class="store-floor"><canvas id="canvas-bad"></canvas></div>
+    <div class="final-banner" id="banner-bad">END OF SHIFT · FINAL RESULTS</div>
+    <div class="kpis" id="kpis-bad"></div>
+  </div>
+
+  <div class="store store-good">
+    <div class="store-header">
+      <div>
+        <div class="scenario-name">OPTIMAL STAFFING</div>
+        <div class="scenario-sub">Enhanced Plan · 8 doctors · 12 treatment rooms</div>
+      </div>
+      <div class="clock" id="clock-good">00:00</div>
+    </div>
+    <div class="day-progress"><div class="day-progress-fill" id="prog-good"></div></div>
+    <div class="store-floor"><canvas id="canvas-good"></canvas></div>
+    <div class="final-banner" id="banner-good">END OF SHIFT · FINAL RESULTS</div>
+    <div class="kpis" id="kpis-good"></div>
+  </div>
+</div>
+
+<div class="legend">
+  <span class="legend-pill"><span class="legend-dot" style="background:#c0392b"></span>ESI-1/2 Resuscitation/Emergency</span>
+  <span class="legend-pill"><span class="legend-dot" style="background:#e67e22"></span>ESI-3 Urgent</span>
+  <span class="legend-pill"><span class="legend-dot" style="background:#f1c40f"></span>ESI-4 Less Urgent</span>
+  <span class="legend-pill"><span class="legend-dot" style="background:#27ae60"></span>ESI-5 Non-Urgent</span>
+  <br>
+  <span class="legend-pill"><span class="legend-sq" style="background:#6d9eb2"></span>Treatment room (free)</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#f1c40f"></span>Room in use</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#c8c1ad"></span>No doctor / no room</span>
+  <span class="legend-pill">Moving dot = patient walking the floor</span>
+  <span class="legend-pill"><strong style="color:#a3334e">✗ LWBS</strong> = left without being seen (walks out)</span>
+  <br>
+  <small>
+    24 h compressed into ~36 s at default speed · Time-varying arrivals with bimodal peaks (10–14h and 18–22h, ×1.6) ·
+    Higher-acuity patients (lower ESI) are seen first · A patient leaves (LWBS) once their wait exceeds patience ·
+    Fixed seed: identical result on every reset · Boarding, imaging/lab steps and shift handovers are not visualised
+  </small>
+</div>
+
+<script>
+/* ENGINE-START (pure logic, no DOM — kept separate so it can be tested headless) */
+// ============================================================
+// Calibration — mirrors the spirit of ed_patient_flow_sim.py:
+//   - ESI 1-5 triage, time-varying bimodal arrivals (10-14h, 18-22h)
+//   - acuity-priority service, LWBS when wait exceeds patience
+// Scenario pair:
+//   UNDERSTAFFED (Minimal): 3 doctors, 5 rooms  -> long D2D, high LWBS
+//   OPTIMAL (Enhanced):     7 doctors, 11 rooms -> short D2D, ~no LWBS
+// ============================================================
+const SHIFT_MIN = 24 * 60;          // 1440 minutes (24 h)
+const REAL_DURATION_SEC = 36;       // 1x ~ 36s for the full 24-hour shift
+const SPEEDS = [0.5, 1.0, 2.0, 4.0];
+
+// ESI acuity mix (share of arrivals) — typical ED distribution
+//   0=ESI-1, 1=ESI-2, 2=ESI-3, 3=ESI-4, 4=ESI-5
+const ESI_SHARE   = [0.02, 0.13, 0.40, 0.30, 0.15];
+const ESI_COLOR   = ["#c0392b", "#c0392b", "#e67e22", "#f1c40f", "#27ae60"];
+const ESI_NAME    = ["ESI-1", "ESI-2", "ESI-3", "ESI-4", "ESI-5"];
+// Treatment-time mean by acuity (minutes). Sicker patients take longer.
+const ESI_TREAT   = [62, 50, 36, 22, 16];
+// Patience (minutes) before a patient gives up and leaves (LWBS).
+// High overall — most patients endure long waits — but the low-acuity tail walks
+// once an understaffed waiting room makes the wait intolerable.
+const ESI_PATIENCE = [1200, 1000, 720, 580, 500];
+// Priority for the queue: lower ESI index = higher priority (seen first).
+
+// Arrivals per hour: base rate scaled by a bimodal time-of-day curve.
+const BASE_ARR_PER_HOUR = 11.0;     // mean patients/hour off-peak floor
+function todFactor(min) {
+  const h = min / 60;
+  // two Gaussian-ish bumps: midday (12h) and evening (20h)
+  const midday  = Math.exp(-Math.pow((h - 12) / 2.4, 2));
+  const evening = Math.exp(-Math.pow((h - 20) / 2.2, 2));
+  const night   = 0.45;             // quiet floor overnight
+  return night + 1.05 * midday + 0.95 * evening;   // peaks ~ x1.6 of the floor
+}
+
+const SCENARIOS = {
+  bad:  { label: "UNDERSTAFFED",     doctors: 4, rooms: 6  },
+  good: { label: "OPTIMAL STAFFING", doctors: 8, rooms: 12 }
+};
+
+// ============================================================
+// Deterministic RNG (mulberry32)
+// ============================================================
+function mulberry32(seed) {
+  let s = seed >>> 0;
+  return function() {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function poissonSample(rng, lambda) {
+  const L = Math.exp(-lambda);
+  let k = 0, p = 1;
+  do { k++; p *= rng(); } while (p > L);
+  return k - 1;
+}
+function pickEsi(rng) {
+  const r = rng();
+  let acc = 0;
+  for (let i = 0; i < ESI_SHARE.length; i++) {
+    acc += ESI_SHARE[i];
+    if (r < acc) return i;
+  }
+  return ESI_SHARE.length - 1;
+}
+
+// ============================================================
+// Deterministic arrival-stream generation (shared by both scenarios)
+// ============================================================
+function generatePatients(seed) {
+  const rng = mulberry32(seed);
+  const stream = [];
+  // IDs start at 1 to avoid the JS "0 is falsy" pitfall.
+  let id = 1;
+  const ratePerMin = BASE_ARR_PER_HOUR / 60.0;
+  for (let m = 0; m < SHIFT_MIN; m++) {
+    const lam = ratePerMin * todFactor(m);
+    const n = poissonSample(rng, lam);
+    for (let i = 0; i < n; i++) {
+      const esi = pickEsi(rng);
+      const treatJitter = 0.7 + rng() * 0.6;
+      const patJitter   = 0.8 + rng() * 0.4;
+      stream.push({
+        id: id++,
+        arrMin: m,
+        esi,
+        treatMin: ESI_TREAT[esi] * treatJitter,
+        patience: ESI_PATIENCE[esi] * patJitter,
+        // a stable scatter spot for the waiting area (per patient)
+        spot: [rng(), rng()]
+      });
+    }
+  }
+  return stream;
+}
+
+// ============================================================
+// Scenario simulation — minute-by-minute, priority by acuity
+// ============================================================
+const TRIAGE_MIN = 4;               // arrival -> triage complete (door, then assessed)
+
+class EdSim {
+  constructor(scenarioKey, stream) {
+    this.key = scenarioKey;
+    this.scn = SCENARIOS[scenarioKey];
+    this.stream = stream;
+    this.streamIdx = 0;
+    this.t = 0;
+
+    // Each patient gets a per-scenario state copy (positions, timers differ).
+    this.patients = stream.map(src => ({
+      id: src.id, arrMin: src.arrMin, esi: src.esi,
+      treatMin: src.treatMin, patience: src.patience, spot: src.spot,
+      state: "unborn",           // unborn -> triage -> waiting -> treating -> done | lwbs
+      triageDoneAt: null,
+      joinedWaitAt: null,
+      startedTreatAt: null,
+      finishedAt: null,
+      roomIdx: null,
+      d2d: null,                 // door-to-doctor minutes
+      wait: null,                // triage-to-treatment minutes
+      lwbsAt: null
+    }));
+
+    // Treatment rooms: each holds a patient id or null. A room can be staffed
+    // only if a doctor is free, so effective capacity = min(rooms, doctors-in-use cap).
+    this.rooms = new Array(this.scn.rooms).fill(null);
+    this.maxDocs = this.scn.doctors;
+
+    // KPI accumulators
+    this.arrived = 0;
+    this.seen = 0;
+    this.lwbs = 0;
+    this.d2dSum = 0; this.d2dCnt = 0;
+    this.waitSum = 0; this.waitCnt = 0;
+    this.maxWaiting = 0;
+    this.finalized = false;
+  }
+
+  docsInUse() {
+    let n = 0;
+    for (const r of this.rooms) if (r !== null) n++;
+    return n;
+  }
+  waitingList() {
+    return this.patients.filter(p => p.state === "waiting");
+  }
+
+  step() {
+    const t = this.t;
+
+    // ── arrivals → triage ──
+    while (this.streamIdx < this.stream.length && this.stream[this.streamIdx].arrMin === t) {
+      const src = this.stream[this.streamIdx++];
+      const p = this.patients[src.id - 1];
+      p.state = "triage";
+      p.triageDoneAt = t + TRIAGE_MIN;
+      this.arrived++;
+    }
+
+    // ── triage → waiting ──
+    for (const p of this.patients) {
+      if (p.state === "triage" && t >= p.triageDoneAt) {
+        p.state = "waiting";
+        p.joinedWaitAt = t;
+      }
+    }
+
+    // ── LWBS: patience exceeded while waiting ──
+    for (const p of this.patients) {
+      if (p.state === "waiting" && (t - p.joinedWaitAt) > p.patience) {
+        p.state = "lwbs";
+        p.lwbsAt = t;
+        this.lwbs++;
+      }
+    }
+
+    // ── treatment completion frees rooms/doctors ──
+    for (let i = 0; i < this.rooms.length; i++) {
+      const pid = this.rooms[i];
+      if (pid !== null) {
+        const p = this.patients[pid - 1];
+        if (t >= p.finishedAt) {
+          p.state = "done";
+          this.rooms[i] = null;
+          this.seen++;
+        }
+      }
+    }
+
+    // ── assign waiting patients to free rooms, highest acuity first ──
+    // A room can be opened only if there is a free doctor (capacity = maxDocs).
+    let waiting = this.waitingList();
+    if (waiting.length > 0) {
+      // sort: lowest ESI index (most acute) first, then longest wait
+      waiting.sort((a, b) => (a.esi - b.esi) || (a.joinedWaitAt - b.joinedWaitAt));
+      for (const p of waiting) {
+        if (this.docsInUse() >= this.maxDocs) break;   // all doctors busy
+        const free = this.rooms.indexOf(null);
+        if (free === -1) break;                         // no free room
+        this.rooms[free] = p.id;
+        p.state = "treating";
+        p.roomIdx = free;
+        p.startedTreatAt = t;
+        p.finishedAt = t + p.treatMin;
+        p.wait = t - p.joinedWaitAt;
+        p.d2d = (t - p.arrMin);                         // arrival -> first doctor
+        this.d2dSum += p.d2d; this.d2dCnt++;
+        this.waitSum += p.wait; this.waitCnt++;
+      }
+    }
+
+    // ── live metric ──
+    const w = this.waitingList().length;
+    if (w > this.maxWaiting) this.maxWaiting = w;
+
+    this.t++;
+    if (this.t >= SHIFT_MIN) this.finalize();
+  }
+
+  finalize() {
+    if (this.finalized) return;
+    // anyone still waiting/triage at end is counted as not-seen (treat as LWBS tail)
+    this.finalized = true;
+  }
+
+  advanceTo(target) {
+    const cap = Math.min(target, SHIFT_MIN);
+    while (this.t < cap) this.step();
+  }
+
+  kpis() {
+    const lwbsRate = this.arrived > 0 ? (this.lwbs / this.arrived) * 100 : 0;
+    return {
+      arrived: this.arrived,
+      seen: this.seen,
+      waiting: this.waitingList().length,
+      lwbs: this.lwbs,
+      lwbsRate,
+      d2d: this.d2dCnt > 0 ? this.d2dSum / this.d2dCnt : 0,
+      avgWait: this.waitCnt > 0 ? this.waitSum / this.waitCnt : 0,
+      maxWaiting: this.maxWaiting,
+      docsInUse: this.docsInUse(),
+      roomsInUse: this.rooms.filter(r => r !== null).length
+    };
+  }
+}
+/* ENGINE-END */
+</script>
+
+<script>
+// ============================================================
+// Rendering (canvas) — top-down ED floor view
+// ============================================================
+const CAN_W = 540, CAN_H = 470;
+
+// Vertical bands of the floor
+const ENTRANCE_Y = 22;                 // "↓ ARRIVALS" header
+const TRIAGE_Y   = 70;                 // triage desk row
+const WAIT_TOP   = 96, WAIT_BOT = 300; // waiting area band
+const ROOM_TOP   = 322;                // treatment rooms band
+const ROOM_BOX_H = 46;
+const ROOM_BOX_W = 60;
+const EXIT_Y     = CAN_H - 14;         // discharge / LWBS exit row
+
+const ENTRANCE_X = 60;                 // arrivals enter top-left
+const TRIAGE_X   = CAN_W / 2;          // triage desk center
+const DISCHARGE_X = CAN_W - 60;        // discharge exit (good side, bottom-right)
+const LWBS_X      = 28;                // LWBS walk out (bottom-left)
+
+const DOT_R = 5.2;
+
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = CAN_W * dpr;
+  canvas.height = CAN_H * dpr;
+  canvas.style.width  = CAN_W + "px";
+  canvas.style.height = CAN_H + "px";
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return ctx;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// Layout the treatment rooms in a grid inside the room band.
+function roomLayout(nRooms) {
+  const perRow = Math.min(6, nRooms);
+  const rows = Math.ceil(nRooms / perRow);
+  const gapX = (CAN_W - perRow * ROOM_BOX_W) / (perRow + 1);
+  const layout = [];
+  for (let i = 0; i < nRooms; i++) {
+    const row = Math.floor(i / perRow);
+    const col = i % perRow;
+    const inThisRow = Math.min(perRow, nRooms - row * perRow);
+    const rowGapX = (CAN_W - inThisRow * ROOM_BOX_W) / (inThisRow + 1);
+    const x = rowGapX + col * (ROOM_BOX_W + rowGapX);
+    const y = ROOM_TOP + row * (ROOM_BOX_H + 12);
+    layout.push({ x, y, cx: x + ROOM_BOX_W / 2, cy: y + ROOM_BOX_H / 2 });
+  }
+  return layout;
+}
+
+function waitSpotFor(p) {
+  // stable scatter inside the waiting band
+  const padX = 50, padTop = 8, padBot = 8;
+  const x = padX + p.spot[0] * (CAN_W - 2 * padX);
+  const y = WAIT_TOP + padTop + p.spot[1] * (WAIT_BOT - WAIT_TOP - padTop - padBot);
+  return { x, y };
+}
+
+function drawPatientDot(ctx, x, y, esi, r, ring) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = ESI_COLOR[esi];
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.9)";
+  ctx.lineWidth = 0.9;
+  ctx.stroke();
+  if (ring) {
+    ctx.beginPath();
+    ctx.arc(x, y, r + 2.4, 0, Math.PI * 2);
+    ctx.strokeStyle = ring;
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+  }
+}
+
+function lerp(a, b, p) { return a + (b - a) * p; }
+function easeInOut(p) { return p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p+2, 2)/2; }
+
+function drawFloor(ctx, sim, simNow) {
+  const t = Math.min(simNow, SHIFT_MIN);
+  const layout = sim._layout || (sim._layout = roomLayout(sim.scn.rooms));
+
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, 0, CAN_H);
+  grad.addColorStop(0, "#faf6ec");
+  grad.addColorStop(1, "#f0e8d1");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, CAN_W, CAN_H);
+
+  // ---- Top badges ----
+  ctx.font = "bold 10px -apple-system, sans-serif";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#a0915d";
+  ctx.textAlign = "left";
+  ctx.fillText("↓ ARRIVALS", 14, ENTRANCE_Y - 6);
+
+  const tod = todFactor(t);
+  if (tod > 1.25) {
+    ctx.fillStyle = "#a3334e";
+    ctx.textAlign = "right";
+    ctx.fillText("▲ PEAK ARRIVALS", CAN_W - 12, ENTRANCE_Y - 6);
+  }
+
+  // ---- Triage desk ----
+  ctx.fillStyle = "#b59b6a";
+  roundRect(ctx, TRIAGE_X - 46, TRIAGE_Y - 12, 92, 22, 4);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 10px -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("TRIAGE", TRIAGE_X, TRIAGE_Y - 1);
+
+  // ---- Waiting area band ----
+  ctx.fillStyle = "#fbf4e3";
+  ctx.fillRect(8, WAIT_TOP, CAN_W - 16, WAIT_BOT - WAIT_TOP);
+  ctx.strokeStyle = "#ddd0ab";
+  ctx.setLineDash([3, 4]);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(8, WAIT_TOP, CAN_W - 16, WAIT_BOT - WAIT_TOP);
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#bfae7a";
+  ctx.font = "bold 9px -apple-system, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("W A I T I N G   A R E A", 16, WAIT_TOP + 14);
+
+  // waiting count chip (turns red when the room is overwhelmed)
+  const nWaiting = sim.waitingList().length;
+  if (nWaiting > 0) {
+    const hot = nWaiting >= 14;
+    ctx.fillStyle = hot ? "#b33939" : "#8a8062";
+    ctx.font = "bold 10px -apple-system, sans-serif";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(nWaiting + " waiting", CAN_W - 16, WAIT_TOP + 14);
+  }
+
+  // ---- Treatment room boxes ----
+  for (let i = 0; i < sim.rooms.length; i++) {
+    const r = layout[i];
+    const pid = sim.rooms[i];
+    const busy = pid !== null;
+    ctx.fillStyle = busy ? "#f1c40f" : "#6d9eb2";
+    ctx.strokeStyle = "#5a5040";
+    ctx.lineWidth = 1;
+    roundRect(ctx, r.x, r.y, ROOM_BOX_W, ROOM_BOX_H, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    // doctor icon + room number
+    ctx.fillStyle = busy ? "#5a4a00" : "#e9f3f6";
+    ctx.font = "bold 9px -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("ROOM " + (i + 1), r.cx, r.y + 4);
+
+    // patient being treated
+    if (busy) {
+      const p = sim.patients[pid - 1];
+      drawPatientDot(ctx, r.cx, r.cy + 5, p.esi, DOT_R + 0.8, "#1f1f1f");
+    } else {
+      ctx.fillStyle = "#e9f3f6";
+      ctx.font = "8px -apple-system, sans-serif";
+      ctx.fillText("free", r.cx, r.cy);
+    }
+  }
+
+  // Staffing summary under the rooms
+  ctx.fillStyle = "#9a8c5e";
+  ctx.font = "bold 9px -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(
+    sim.scn.doctors + " doctors · " + sim.scn.rooms + " rooms  (in use: " +
+    sim.docsInUse() + ")",
+    CAN_W / 2, CAN_H - 6
+  );
+
+  // ---- Patients (walking / waiting / leaving) ----
+  for (const p of sim.patients) {
+    if (p.state === "unborn" || p.state === "done") continue;
+
+    if (p.state === "triage") {
+      // walk from arrivals entrance to the triage desk
+      const prog = easeInOut(Math.min(1, (simNow - p.arrMin) / TRIAGE_MIN));
+      const x = lerp(ENTRANCE_X, TRIAGE_X, prog);
+      const y = lerp(ENTRANCE_Y + 6, TRIAGE_Y, prog);
+      drawPatientDot(ctx, x, y, p.esi, DOT_R);
+    } else if (p.state === "waiting") {
+      // walk from triage desk into the waiting scatter spot, then settle
+      const sp = waitSpotFor(p);
+      const since = simNow - p.joinedWaitAt;
+      const prog = easeInOut(Math.min(1, since / 6));   // 6 sim-min to settle
+      const x = lerp(TRIAGE_X, sp.x, prog);
+      const y = lerp(TRIAGE_Y + 8, sp.y, prog);
+      drawPatientDot(ctx, x, y, p.esi, DOT_R);
+    } else if (p.state === "treating") {
+      // patients already drawn inside their room box; draw the walk-in for the
+      // first ~5 sim-min from waiting spot to room, then it's the room dot only.
+      const since = simNow - p.startedTreatAt;
+      if (since < 5 && p.roomIdx !== null) {
+        const sp = waitSpotFor(p);
+        const r = layout[p.roomIdx];
+        const prog = easeInOut(Math.min(1, since / 5));
+        const x = lerp(sp.x, r.cx, prog);
+        const y = lerp(sp.y, r.cy + 5, prog);
+        drawPatientDot(ctx, x, y, p.esi, DOT_R);
+      }
+    } else if (p.state === "lwbs") {
+      // dejected walk out toward the bottom-left LWBS exit, fading
+      const since = simNow - p.lwbsAt;
+      if (since > 8) continue;                          // gone after 8 sim-min
+      const sp = waitSpotFor(p);
+      const prog = easeInOut(Math.min(1, since / 8));
+      const x = lerp(sp.x, LWBS_X, prog);
+      const y = lerp(sp.y, EXIT_Y, prog);
+      ctx.globalAlpha = 1 - prog * 0.85;
+      drawPatientDot(ctx, x, y, p.esi, DOT_R, "#a3334e");
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ---- LWBS exit marker (bottom-left) ----
+  ctx.fillStyle = "#a3334e";
+  ctx.font = "bold 9px -apple-system, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("✗ LWBS exit", 10, EXIT_Y - 14);
+
+  // ---- Clock (top center) ----
+  ctx.fillStyle = "#bfae7a";
+  ctx.font = "10px 'Courier New', monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(fmtClock(t), CAN_W / 2, ENTRANCE_Y - 6);
+}
+
+function fmtClock(min) {
+  const m = Math.min(min, SHIFT_MIN);
+  const h = Math.floor(m / 60) % 24;
+  const mm = Math.floor(m % 60);
+  return `${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+}
+
+function fmtInt(v) { return Math.round(v).toLocaleString("en-US"); }
+
+function renderKPIs(elId, sim, otherSim) {
+  const k = sim.kpis();
+  const o = otherSim.kpis();
+
+  function delta(value, otherValue, fmt, betterWhen) {
+    const d = value - otherValue;
+    if (Math.abs(d) < 0.05) return "";
+    const isBetter = (betterWhen === "lower" ? d < 0 : d > 0);
+    const cls = isBetter ? "delta-good" : "delta-bad";
+    const sign = d > 0 ? "+" : "";
+    return ` <span class="${cls}">(${sign}${fmt(d)})</span>`;
+  }
+
+  // CMS door-to-doctor benchmark is <=28 min — colour the chip accordingly.
+  const d2dGood = k.d2d <= 28;
+  const d2dChip = `<span class="esi-chip" style="background:${d2dGood ? "#2d8a45" : "#b33939"}">${k.d2d.toFixed(0)}m</span>`;
+
+  const rows = [
+    ["Arrived",      fmtInt(k.arrived), ""],
+    ["In waiting",   `${k.waiting}`, ""],
+    ["Seen",         fmtInt(k.seen) + delta(k.seen, o.seen, v => fmtInt(v), "higher"), ""],
+    ["Door-to-Doctor", k.d2d.toFixed(0) + " min" + delta(k.d2d, o.d2d, v => v.toFixed(0) + "m", "lower"),
+                     "CMS target ≤28m"],
+    ["Avg wait",     k.avgWait.toFixed(0) + " min" + delta(k.avgWait, o.avgWait, v => v.toFixed(0) + "m", "lower"), ""],
+    ["LWBS",         fmtInt(k.lwbs) + delta(k.lwbs, o.lwbs, v => fmtInt(v), "lower"), ""],
+    ["LWBS rate",    k.lwbsRate.toFixed(1) + " %" + delta(k.lwbsRate, o.lwbsRate, v => v.toFixed(1) + "pp", "lower"),
+                     "target <2%"],
+    ["Peak waiting", `${k.maxWaiting}` + delta(k.maxWaiting, o.maxWaiting, v => v.toFixed(0), "lower"), ""],
+    ["D2D status",   d2dChip, ""],
+  ];
+
+  let html = "";
+  for (const [lbl, val, sub] of rows) {
+    html += `<div class="kpi"><span class="kpi-label">${lbl}</span><span class="kpi-value">${val}${sub ? `<br><span class="kpi-proj">${sub}</span>` : ""}</span></div>`;
+  }
+  document.getElementById(elId).innerHTML = html;
+}
+
+// ============================================================
+// Main loop
+// ============================================================
+const SEED = 20260615;   // fixed → deterministic result
+const STEP_MIN = 30;     // size of "1 step" in sim-minutes
+let stream, simBad, simGood, ctxBad, ctxGood;
+let simMinute = 0;
+let lastFrameTime = null;
+let running = true;
+let speedIdx = 1;
+
+function buildAll() {
+  stream  = generatePatients(SEED);
+  simBad  = new EdSim("bad",  stream);
+  simGood = new EdSim("good", stream);
+  ctxBad  = setupCanvas(document.getElementById("canvas-bad"));
+  ctxGood = setupCanvas(document.getElementById("canvas-good"));
+  simMinute = 0;
+  lastFrameTime = null;
+  running = true;
+  document.getElementById("pauseBtn").textContent = "⏸ Pause";
+  document.getElementById("banner-bad").classList.remove("show");
+  document.getElementById("banner-good").classList.remove("show");
+}
+
+// Advance (or rewind+replay) both simulations to targetMin (deterministic).
+function jumpTo(targetMin) {
+  targetMin = Math.max(0, Math.min(SHIFT_MIN, targetMin));
+  if (targetMin < simBad.t) {
+    simBad  = new EdSim("bad",  stream);
+    simGood = new EdSim("good", stream);
+  }
+  simBad.advanceTo(targetMin);
+  simGood.advanceTo(targetMin);
+  simMinute = targetMin;
+  if (targetMin < SHIFT_MIN) {
+    document.getElementById("banner-bad").classList.remove("show");
+    document.getElementById("banner-good").classList.remove("show");
+  }
+}
+
+function tick(now) {
+  if (lastFrameTime === null) lastFrameTime = now;
+  const dt = (now - lastFrameTime) / 1000;
+  lastFrameTime = now;
+
+  if (running && simMinute < SHIFT_MIN) {
+    const minPerReal = SHIFT_MIN / REAL_DURATION_SEC;
+    simMinute += dt * minPerReal * SPEEDS[speedIdx];
+    if (simMinute > SHIFT_MIN) simMinute = SHIFT_MIN;
+    simBad.advanceTo(Math.floor(simMinute));
+    simGood.advanceTo(Math.floor(simMinute));
+  }
+  drawFloor(ctxBad,  simBad,  simMinute);
+  drawFloor(ctxGood, simGood, simMinute);
+
+  const clockStr = fmtClock(Math.min(simMinute, SHIFT_MIN));
+  document.getElementById("clock-bad").textContent  = clockStr;
+  document.getElementById("clock-good").textContent = clockStr;
+
+  const progPct = Math.min(100, (simMinute / SHIFT_MIN) * 100);
+  document.getElementById("prog-bad").style.width  = progPct + "%";
+  document.getElementById("prog-good").style.width = progPct + "%";
+
+  renderKPIs("kpis-bad",  simBad,  simGood);
+  renderKPIs("kpis-good", simGood, simBad);
+
+  if (simMinute >= SHIFT_MIN) {
+    const bb = document.getElementById("banner-bad");
+    const bg = document.getElementById("banner-good");
+    bb.textContent = "Understaffing compounds — waits explode and patients walk out.";
+    bg.textContent = "Right-sized staffing: patients seen fast, almost none leave.";
+    bb.classList.add("show");
+    bg.classList.add("show");
+  }
+
+  requestAnimationFrame(tick);
+}
+
+// ============================================================
+// Controls
+// ============================================================
+function updateSpeedLabel() {
+  document.getElementById("speedLabel").textContent = SPEEDS[speedIdx].toFixed(1) + "×";
+}
+document.getElementById("speedBtn").addEventListener("click", () => {
+  speedIdx = (speedIdx + 1) % SPEEDS.length;
+  updateSpeedLabel();
+});
+document.getElementById("pauseBtn").addEventListener("click", () => {
+  running = !running;
+  document.getElementById("pauseBtn").textContent = running ? "⏸ Pause" : "▶ Resume";
+});
+document.getElementById("stepFwdBtn").addEventListener("click", () => {
+  running = false;
+  document.getElementById("pauseBtn").textContent = "▶ Resume";
+  jumpTo(Math.round(simMinute) + STEP_MIN);
+});
+document.getElementById("stepBackBtn").addEventListener("click", () => {
+  running = false;
+  document.getElementById("pauseBtn").textContent = "▶ Resume";
+  jumpTo(Math.round(simMinute) - STEP_MIN);
+});
+document.getElementById("resetBtn").addEventListener("click", () => {
+  buildAll();
+});
+
+// Boot
+updateSpeedLabel();
+buildAll();
+requestAnimationFrame(tick);
+</script>
+
+<!-- oux:behavior --><script>
+(function(){
+function ready(fn){if(document.readyState!=="loading"){setTimeout(fn,0);}else{document.addEventListener("DOMContentLoaded",fn);}}
+ready(function(){
+  // --- responsive table wrapping (all templates) ---
+  document.querySelectorAll("table").forEach(function(t){
+    var p=t.parentElement;
+    if(!p)return;
+    if(p.classList&&(p.classList.contains("oux-tbl-wrap")||p.classList.contains("table-responsive")))return;
+    // skip tiny KPI-style tables (<=2 cols and <=2 rows)
+    var cols=t.rows&&t.rows[0]?t.rows[0].cells.length:0;
+    if(cols<=1)return;
+    var w=document.createElement("div");w.className="oux-tbl-wrap";
+    p.insertBefore(w,t);w.appendChild(t);
+  });
+
+});
+})();
+</script><!-- /oux:behavior --></body>
+</html>

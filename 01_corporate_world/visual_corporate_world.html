@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><!-- optidice-ux v1 --><!-- oux:viewport --><meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- /oux:viewport --><!-- oux:meta --><meta name="description" content="Workforce Analytics - Animated Simulation - an animated canvas simulation by OptiDice."><!-- /oux:meta --><!-- oux:favicon --><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23161b22"/><text x="32" y="44" font-family="Segoe UI,Arial,sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="%23D4A437">OD</text></svg>"><!-- /oux:favicon --><!-- oux:style --><style>
+.oux-header{position:fixed;top:0;left:0;right:0;height:48px;z-index:10001;
+background:#161b22;color:#e6edf3;display:flex;align-items:center;
+gap:14px;padding:0 14px;box-shadow:0 2px 8px rgba(0,0,0,0.35);
+font-family:"Segoe UI",system-ui,-apple-system,sans-serif;font-size:14px;}
+.oux-header a.oux-wordmark{color:#D4A437;font-weight:800;text-decoration:none;
+letter-spacing:0.5px;font-size:16px;white-space:nowrap;flex:0 0 auto;}
+.oux-header a.oux-wordmark:hover{filter:brightness(1.2);}
+.oux-header .oux-title{flex:1 1 auto;text-align:center;font-weight:600;
+color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+min-width:0;opacity:0.92;}
+.oux-header .oux-right{flex:0 0 auto;display:flex;align-items:center;gap:8px;}
+.oux-header button.oux-skim{background:transparent;border:1px solid #D4A437;
+color:#D4A437;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;
+font-family:inherit;white-space:nowrap;}
+.oux-header button.oux-skim:hover{background:#D4A437;color:#161b22;}
+body.oux-skimming .oux-header button.oux-skim{background:#D4A437;color:#161b22;}
+.oux-skiplink{position:absolute;left:-999px;top:0;z-index:10002;background:#D4A437;
+color:#161b22;padding:8px 14px;border-radius:0 0 8px 0;text-decoration:none;font-weight:600;}
+.oux-skiplink:focus{left:0;}
+body{padding-top:48px;}
+
+@media print{.oux-header,.oux-skiplink{display:none !important;}body{padding-top:0 !important;}}
+@media (max-width:600px){.oux-header .oux-title{display:none;}}
+
+.oux-tbl-wrap{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.oux-tbl-wrap > table{min-width:max-content;}
+.table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+@media (max-width:760px){
+  .oux-tbl-wrap > table, .table-responsive > table{font-size:0.82em;}
+}
+</style><!-- /oux:style -->
+<meta charset="UTF-8">
+<title>Visual Simulation · Workforce Culture over 5 Years</title>
+<style>
+  :root {
+    --parchment: #f5efe1;
+    --parchment-dark: #e8dfc8;
+    --ink: #2a2a2a;
+    --ink-soft: #5a5a5a;
+    --bad: #b33939;
+    --good: #2d8a45;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--parchment);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    padding: 18px 14px 28px;
+    min-height: 100vh;
+  }
+  header.app-head { text-align: center; margin-bottom: 6px; }
+  header.app-head h1 { margin: 0; font-size: 21px; letter-spacing: 0.4px; }
+  header.app-head p { margin: 4px 0 0; color: var(--ink-soft); font-size: 13px; }
+
+  .controls {
+    display: flex; gap: 12px; justify-content: center;
+    margin: 14px 0 18px;
+  }
+  .controls button {
+    background: #fff;
+    border: 1.5px solid var(--ink);
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 4px;
+    font-family: inherit;
+    color: var(--ink);
+    transition: background 0.15s, transform 0.05s;
+    min-width: 120px;
+  }
+  .controls button#speedBtn { min-width: 170px; }
+  .controls button#resetBtn { min-width: 140px; }
+  .controls button:hover { background: var(--parchment-dark); }
+  .controls button:active { transform: translateY(1px); }
+  .controls .speed-label {
+    display: inline-block;
+    font-family: "Courier New", monospace;
+    margin-left: 6px;
+    font-size: 14px;
+  }
+
+  .stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .store {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+    border: 2px solid;
+    display: flex;
+    flex-direction: column;
+  }
+  .store-bad { border-color: var(--bad); }
+  .store-good { border-color: var(--good); }
+
+  .store-header {
+    padding: 10px 14px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .store-bad .store-header { background: linear-gradient(135deg, var(--bad), #8b2c2c); }
+  .store-good .store-header { background: linear-gradient(135deg, var(--good), #1f6b34); }
+
+  .scenario-name { font-weight: 800; font-size: 14px; letter-spacing: 0.6px; }
+  .scenario-sub  { font-size: 11px; opacity: 0.9; margin-top: 2px; }
+  .clock {
+    font-family: "Courier New", monospace;
+    font-size: 22px; font-weight: 700;
+  }
+
+  .day-progress { height: 4px; background: rgba(255,255,255,0.22); }
+  .day-progress-fill { height: 100%; background: #fff; width: 0%; }
+
+  .store-floor { position: relative; background: #faf6ec; }
+  .store-floor canvas { display: block; width: 100%; height: auto; }
+
+  .kpis {
+    padding: 10px 12px;
+    background: #fff;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px 14px;
+    font-size: 11.5px;
+    border-top: 1px solid var(--parchment-dark);
+  }
+  .kpi {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dotted #d8d2bb;
+    padding-bottom: 3px;
+  }
+  .kpi-label { color: var(--ink-soft); }
+  .kpi-value {
+    font-weight: 700;
+    font-family: "Courier New", monospace;
+    text-align: right;
+  }
+  .kpi-proj {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #998a5a;
+    margin-top: 1px;
+    letter-spacing: 0.2px;
+  }
+  .delta-good { color: var(--good); font-weight: 700; }
+  .delta-bad  { color: var(--bad);  font-weight: 700; }
+
+  .final-banner {
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #fff;
+    display: none;
+  }
+  .store-bad .final-banner.show { display: block; background: #6e1f1f; }
+  .store-good .final-banner.show { display: block; background: #1f5a2a; }
+
+  .legend {
+    text-align: center;
+    margin: 18px auto 0;
+    max-width: 980px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.9;
+  }
+  .legend-dot {
+    display: inline-block;
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 4px;
+    border: 1px solid rgba(0,0,0,0.25);
+  }
+  .legend-sq {
+    display: inline-block;
+    width: 12px; height: 9px;
+    vertical-align: middle;
+    margin-right: 4px;
+    border-radius: 2px;
+    border: 1px solid rgba(0,0,0,0.2);
+  }
+  .legend-pill { display: inline-block; margin: 0 9px; }
+  .legend small { display: block; margin-top: 6px; color: #8a8062; }
+
+  @media (max-width: 900px) {
+    .stage { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body><!-- oux:skiplink --><a class="oux-skiplink" href="#oux-content">Skip to content</a><!-- /oux:skiplink --><!-- oux:header-bar --><div class="oux-header" role="banner"><a class="oux-wordmark" href="https://www.optidice.com" target="_blank" rel="noopener">OptiDice</a><span class="oux-title">Workforce Analytics - Animated Simulation</span><div class="oux-right"><a class="oux-skim" href="corporate_world_mc_report.html" style="text-decoration:none;">← Back to full report</a></div></div><!-- /oux:header-bar -->
+
+<header class="app-head" id="oux-content">
+  <h1>Agent-Based Simulation · 5 years inside two company cultures</h1>
+  <p>Same hires, same labour market — only the culture changes. Watch satisfaction, burnout, and turnover compound.</p>
+</header>
+
+<div class="controls">
+  <button id="speedBtn">Speed<span class="speed-label" id="speedLabel">1.0×</span></button>
+  <button id="pauseBtn">⏸ Pause</button>
+  <button id="stepBackBtn" title="Rewind 3 sim-months">⏮ −3mo</button>
+  <button id="stepFwdBtn" title="Advance 3 sim-months">⏭ +3mo</button>
+  <button id="resetBtn">⟲ Reset</button>
+</div>
+
+<div class="stage">
+  <div class="store store-bad">
+    <div class="store-header">
+      <div>
+        <div class="scenario-name">SWEATSHOP CULTURE 🔥</div>
+        <div class="scenario-sub">High workload · Low recognition · No learning budget</div>
+      </div>
+      <div class="clock" id="clock-bad">Year 1</div>
+    </div>
+    <div class="day-progress"><div class="day-progress-fill" id="prog-bad"></div></div>
+    <div class="store-floor"><canvas id="canvas-bad"></canvas></div>
+    <div class="final-banner" id="banner-bad">END OF YEAR 5 · FINAL RESULTS</div>
+    <div class="kpis" id="kpis-bad"></div>
+  </div>
+
+  <div class="store store-good">
+    <div class="store-header">
+      <div>
+        <div class="scenario-name">GREAT PLACE TO WORK ⭐</div>
+        <div class="scenario-sub">Recognition · Learning · Sustainable workload</div>
+      </div>
+      <div class="clock" id="clock-good">Year 1</div>
+    </div>
+    <div class="day-progress"><div class="day-progress-fill" id="prog-good"></div></div>
+    <div class="store-floor"><canvas id="canvas-good"></canvas></div>
+    <div class="final-banner" id="banner-good">END OF YEAR 5 · FINAL RESULTS</div>
+    <div class="kpis" id="kpis-good"></div>
+  </div>
+</div>
+
+<div class="legend">
+  <span class="legend-pill"><span class="legend-dot" style="background:#2d8a45"></span>Thriving (sat ≥ 70%)</span>
+  <span class="legend-pill"><span class="legend-dot" style="background:#f1c40f"></span>Coasting (40–70%)</span>
+  <span class="legend-pill"><span class="legend-dot" style="background:#e67e22"></span>At risk (20–40%)</span>
+  <span class="legend-pill"><span class="legend-dot" style="background:#b33939"></span>Unhappy (&lt; 20%)</span>
+  <br>
+  <span class="legend-pill"><span class="legend-dot" style="background:#fff;box-shadow:0 0 0 2px #c0392b inset"></span>🔥 Burning out (flashing)</span>
+  <span class="legend-pill"><span class="legend-dot" style="background:#9aa0a6"></span>New hire (neutral)</span>
+  <span class="legend-pill">Dot leaving the floor = an employee quits (turnover)</span>
+  <span class="legend-pill">A faded dot enters = the backfill hire</span>
+  <small>
+    5 years (60 months) compressed into ~36 s at default speed · ~52 employees per floor · Same arrival of new hires and the same
+    economic climate drive both panels — only the culture DNA differs (recognition, workload, learning) ·
+    Fixed seed: identical result on every reset · A stylised agent-based view of the 21,000-run Monte Carlo model
+  </small>
+</div>
+
+<script>
+/* ENGINE-START (pure logic, no DOM — kept separate so it can be tested headless) */
+// ============================================================
+// Calibration — stylised from corp_world_mc_sim.py (agent-based
+// employee/company microsimulation). Two of the 8 culture archetypes:
+//   BAD  = Sweatshop  🔥  (high workload, low recognition, toxic)
+//   GOOD = GreatPlace ⭐  (recognition, learning, sustainable workload)
+// Endpoints are tuned to the case-study narrative:
+//   satisfaction  ~45% vs ~80%
+//   annual turnover ~38% vs ~12%
+//   burnout rate   ~30% vs ~8%
+// ============================================================
+const HORIZON_MONTHS = 60;          // 5 years
+const HEADCOUNT      = 52;          // employees per floor (target)
+const REAL_DURATION_SEC = 36;       // 1× ≈ 36s for the full 5-year run
+const SPEEDS = [0.5, 1.0, 2.0, 4.0];
+
+// Per-month culture dynamics. Satisfaction & stress are 0..1 scores per agent.
+//   satSetpt    : long-run satisfaction the culture converges toward
+//   satDrift    : monthly pull toward the setpoint
+//   stressSetpt : stress plateau the culture pushes agents toward
+//   stressDrift : monthly pull toward the stress plateau (so stress saturates
+//                 rather than climbing to 1.0 — gives a stable burnout rate)
+//   recognition : random monthly "win" probability that lifts satisfaction
+//   burnoutThresh: stress level above which an agent is "burnt out"
+//   quitAnnual  : baseline voluntary-quit hazard PER YEAR for a content agent
+//                 (divided by 12 each month; amplified by dissatisfaction+burnout)
+const SCENARIOS = {
+  bad: {
+    label: "SWEATSHOP",
+    satSetpt: 0.47, satDrift: 0.10,
+    stressSetpt: 0.68, stressDrift: 0.12,
+    recognition: 0.05, recogLift: 0.04,
+    burnoutThresh: 0.62, quitAnnual: 0.285,
+    startSat: 0.62, startStress: 0.32
+  },
+  good: {
+    label: "GREATPLACE",
+    satSetpt: 0.78, satDrift: 0.11,
+    stressSetpt: 0.46, stressDrift: 0.10,
+    recognition: 0.20, recogLift: 0.05,
+    burnoutThresh: 0.62, quitAnnual: 0.165,
+    startSat: 0.66, startStress: 0.24
+  }
+};
+
+// ============================================================
+// Deterministic RNG (mulberry32)
+// ============================================================
+function mulberry32(seed) {
+  let s = seed >>> 0;
+  return function() {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ============================================================
+// Shared "labour market": deterministic personality traits + grid
+// slots, identical for both floors so the only difference is culture.
+// Each slot gets a stable (gx,gy) layout coordinate; a "seat" is reused
+// by the backfill hire when its occupant quits.
+// ============================================================
+const GRID_COLS = 8;
+const GRID_ROWS = 7;            // 56 seats ≥ HEADCOUNT
+function buildWorkforce(seed) {
+  const rng = mulberry32(seed);
+  const seats = [];
+  let id = 1;
+  for (let r = 0; r < GRID_ROWS; r++) {
+    for (let c = 0; c < GRID_COLS; c++) {
+      if (seats.length >= HEADCOUNT) break;
+      seats.push({
+        seatId: seats.length,
+        gx: c, gy: r,
+        // resilience: how well an agent resists stress / dissatisfaction (0.6..1.4)
+        baseResilience: 0.6 + rng() * 0.8,
+        // a per-seat stream of monthly random draws (recognition luck, quit luck)
+        // pre-rolled so both floors share identical "luck" — fair comparison.
+        rolls: Array.from({ length: HORIZON_MONTHS * 3 }, () => rng())
+      });
+    }
+  }
+  return seats;
+}
+
+// ============================================================
+// One culture floor — month-stepped agent population
+// ============================================================
+class CultureSim {
+  constructor(scenarioKey, seats) {
+    this.key = scenarioKey;
+    this.scn = SCENARIOS[scenarioKey];
+    this.seats = seats;
+    this.month = 0;
+
+    // agents: one per seat. tenure in months; sat 0..1; stress 0..1.
+    this.agents = seats.map(seat => this.spawn(seat, 0, true));
+
+    // departure animation buffer: {seatId, gx, gy, startMonth}
+    this.leaving = [];
+    // entering (backfill) animation: {seatId, gx, gy, startMonth}
+    this.entering = [];
+
+    // cumulative KPIs
+    this.totalDepartures = 0;          // voluntary quits over the run
+    this.burnoutEpisodes = 0;          // distinct burnout flare-ups
+    this.headcountMonths = 0;          // for annualised turnover denominator
+    this.finalized = false;
+  }
+
+  spawn(seat, month, founding) {
+    const scn = this.scn;
+    // resilience re-centred so a value of 1.0 = average (0.6..1.4 → ~0.7..1.3 effect)
+    const res = seat.baseResilience;
+    return {
+      seatId: seat.seatId, gx: seat.gx, gy: seat.gy,
+      resilience: res,
+      // founding cohort start near the culture's "honeymoon" level; backfills
+      // enter neutral (~0.5) and warm up toward the same dynamics.
+      sat: founding ? scn.startSat * (0.85 + 0.3 * res / 1.4) : 0.50,
+      stress: founding ? scn.startStress : 0.18,
+      tenure: 0,
+      bornMonth: month,
+      isNew: !founding,        // drives the neutral-grey "new hire" colour for a while
+      burning: false           // currently above the burnout threshold (flashing)
+    };
+  }
+
+  // Per-agent monthly update of satisfaction & stress, returns true if the
+  // agent quits this month.
+  stepAgent(a, seat, m) {
+    const scn = this.scn;
+    const rk = m * 3;
+    const rRecog = seat.rolls[rk] || 0.5;
+    const rQuit  = seat.rolls[rk + 1] || 0.5;
+    const rNoise = seat.rolls[rk + 2] || 0.5;
+
+    // ── stress: drift toward the culture's plateau, damped by resilience ──
+    // resilient agents settle below the culture setpoint; fragile ones above.
+    const stressTarget = Math.max(0, Math.min(1, scn.stressSetpt / a.resilience));
+    a.stress += scn.stressDrift * (stressTarget - a.stress);
+    a.stress += (rNoise - 0.5) * 0.02;                  // idiosyncratic noise
+    a.stress = Math.max(0, Math.min(1, a.stress));
+    const wasBurning = a.burning;
+    a.burning = a.stress >= scn.burnoutThresh;
+    if (a.burning && !wasBurning) this.burnoutEpisodes++;
+
+    // ── satisfaction: pulled toward setpoint, dragged down by high stress ──
+    const satTarget = scn.satSetpt - 0.55 * Math.max(0, a.stress - 0.45);
+    a.sat += scn.satDrift * (satTarget - a.sat);
+    if (rRecog < scn.recognition) a.sat += scn.recogLift * a.resilience;  // a "win"
+    a.sat += (rNoise - 0.5) * 0.025;
+    a.sat = Math.max(0, Math.min(1, a.sat));
+
+    a.tenure++;
+    if (a.tenure >= 8) a.isNew = false;
+
+    // ── quit hazard ── monthly = annual baseline / 12, amplified by
+    // dissatisfaction and active burnout, softened by resilience.
+    const dissat = Math.max(0, 0.55 - a.sat);          // restless below ~55%
+    const burn   = a.burning ? 1.0 : Math.max(0, a.stress - 0.5) * 2;
+    const monthly = (scn.quitAnnual / 12) * (1.0 + 2.6 * dissat + 0.9 * burn) / a.resilience;
+    return rQuit < monthly;
+  }
+
+  step() {
+    const m = this.month;
+    // prune finished animations (1.4-month travel)
+    this.leaving  = this.leaving.filter(d => m - d.startMonth < 1.4);
+    this.entering = this.entering.filter(d => m - d.startMonth < 1.4);
+
+    for (let i = 0; i < this.agents.length; i++) {
+      const a = this.agents[i];
+      const seat = this.seats[a.seatId];
+      this.headcountMonths++;
+      const quits = this.stepAgent(a, seat, m);
+      if (quits) {
+        this.totalDepartures++;
+        this.leaving.push({ seatId: a.seatId, gx: a.gx, gy: a.gy, startMonth: m });
+        // backfill: a fresh neutral hire takes the seat
+        this.agents[i] = this.spawn(seat, m, false);
+        this.entering.push({ seatId: seat.seatId, gx: seat.gx, gy: seat.gy, startMonth: m });
+      }
+    }
+
+    this.month++;
+    if (this.month >= HORIZON_MONTHS) this.finalized = true;
+  }
+
+  advanceTo(targetMonth) {
+    const cap = Math.min(targetMonth, HORIZON_MONTHS);
+    while (this.month < cap) this.step();
+  }
+
+  kpis() {
+    let satSum = 0, burning = 0;
+    for (const a of this.agents) {
+      satSum += a.sat;
+      if (a.burning) burning++;
+    }
+    const n = this.agents.length;
+    const meanSat = n > 0 ? satSum / n : 0;
+    const burnoutRate = n > 0 ? burning / n : 0;
+    // annualised turnover = departures / average headcount, scaled to per-year
+    const years = Math.max(1e-9, this.month / 12);
+    const avgHead = this.month > 0 ? this.headcountMonths / this.month : n;
+    const annTurnover = avgHead > 0 ? (this.totalDepartures / avgHead) / years : 0;
+    return {
+      meanSat,                         // 0..1
+      annTurnover,                     // fraction per year
+      burnoutRate,                     // 0..1
+      departures: this.totalDepartures,
+      burnoutEpisodes: this.burnoutEpisodes,
+      headcount: n
+    };
+  }
+}
+/* ENGINE-END */
+</script>
+
+<script>
+// ============================================================
+// Rendering (canvas) — top-down "office floor" of employee dots
+// ============================================================
+const CAN_W = 540, CAN_H = 470;
+const FLOOR_TOP = 34, FLOOR_BOT = CAN_H - 16;
+const FLOOR_L = 22, FLOOR_R = CAN_W - 22;
+const CELL_W = (FLOOR_R - FLOOR_L) / GRID_COLS;
+const CELL_H = (FLOOR_BOT - FLOOR_TOP) / GRID_ROWS;
+const DOT_R = 9;
+
+function seatCenter(gx, gy) {
+  return {
+    x: FLOOR_L + CELL_W * (gx + 0.5),
+    y: FLOOR_TOP + CELL_H * (gy + 0.5)
+  };
+}
+
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = CAN_W * dpr;
+  canvas.height = CAN_H * dpr;
+  canvas.style.width  = CAN_W + "px";
+  canvas.style.height = CAN_H + "px";
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return ctx;
+}
+
+// satisfaction → colour ramp (red → orange → yellow → green)
+function satColor(sat) {
+  if (sat >= 0.70) return "#2d8a45";   // thriving
+  if (sat >= 0.40) return "#f1c40f";   // coasting
+  if (sat >= 0.20) return "#e67e22";   // at risk
+  return "#b33939";                    // unhappy
+}
+
+function fmtYear(m) {
+  const yr = Math.min(5, Math.floor(m / 12) + 1);
+  const mo = Math.floor(m % 12) + 1;
+  return `Y${yr}·M${String(mo).padStart(2, "0")}`;
+}
+
+function drawFloor(ctx, sim, monthNow) {
+  const m = monthNow;
+
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, 0, CAN_H);
+  grad.addColorStop(0, "#faf6ec");
+  grad.addColorStop(1, "#f0e8d1");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, CAN_W, CAN_H);
+
+  // ---- Top badges ----
+  ctx.font = "bold 10px -apple-system, sans-serif";
+  ctx.textBaseline = "middle";
+  const yr = Math.min(5, Math.floor(m / 12) + 1);
+  // economic-climate marker (shared by both floors): a mild downturn mid-run
+  if (m >= 24 && m < 36) {
+    ctx.fillStyle = "#a3334e";
+    ctx.textAlign = "right";
+    ctx.fillText("▼ DOWNTURN (hiring freeze)", CAN_W - 12, 16);
+  }
+  ctx.fillStyle = "#8a8062";
+  ctx.textAlign = "left";
+  ctx.fillText("THE FLOOR · " + sim.agents.length + " seats", 14, 16);
+
+  // ---- Floor outline ----
+  ctx.strokeStyle = "#d6cbac";
+  ctx.setLineDash([4, 4]);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(FLOOR_L - 8, FLOOR_TOP - 8, (FLOOR_R - FLOOR_L) + 16, (FLOOR_BOT - FLOOR_TOP) + 16);
+  ctx.setLineDash([]);
+
+  // ---- Leaving employees (animate exiting toward the right edge / "the door") ----
+  for (const d of sim.leaving) {
+    const p = Math.min(1, (monthNow - d.startMonth) / 1.4);
+    const c0 = seatCenter(d.gx, d.gy);
+    const x = c0.x + (CAN_W + 30 - c0.x) * p;     // slide off the right edge
+    const y = c0.y - 6 * Math.sin(p * Math.PI);   // slight arc
+    const alpha = 1 - p;
+    ctx.globalAlpha = Math.max(0, alpha);
+    ctx.beginPath();
+    ctx.arc(x, y, DOT_R, 0, Math.PI * 2);
+    ctx.fillStyle = "#9aa0a6";
+    ctx.fill();
+    // little "→ exit" trail
+    ctx.strokeStyle = "rgba(179,57,57,0.4)";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(c0.x, c0.y);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // ---- Seated agents ----
+  const flashOn = Math.floor(monthNow * 6) % 2 === 0;   // burnout flash
+  for (const a of sim.agents) {
+    const seatId = a.seatId;
+    // if this seat is currently animating an incoming backfill, ease it in
+    let enterP = 1;
+    for (const e of sim.entering) {
+      if (e.seatId === seatId) {
+        enterP = Math.min(1, (monthNow - e.startMonth) / 1.4);
+        break;
+      }
+    }
+    const c = seatCenter(a.gx, a.gy);
+    // incoming hire drops in from the top edge
+    const y = c.y - (1 - enterP) * 40;
+    const alpha = a.isNew ? (0.55 + 0.45 * enterP) : 1;
+
+    ctx.globalAlpha = alpha;
+
+    // burnout flare ring (flashing)
+    if (a.burning && flashOn) {
+      ctx.beginPath();
+      ctx.arc(c.x, y, DOT_R + 4, 0, Math.PI * 2);
+      ctx.strokeStyle = "#c0392b";
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+    }
+
+    // the dot
+    ctx.beginPath();
+    ctx.arc(c.x, y, DOT_R, 0, Math.PI * 2);
+    ctx.fillStyle = a.isNew && enterP < 1 ? "#9aa0a6" : satColor(a.sat);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.85)";
+    ctx.lineWidth = 1.1;
+    ctx.stroke();
+
+    // new-hire marker (a small neutral grey core) for the first few months
+    if (a.isNew) {
+      ctx.beginPath();
+      ctx.arc(c.x, y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = "#dfe2e6";
+      ctx.fill();
+    }
+
+    // burnout emoji-ish mark when flaring
+    if (a.burning && flashOn) {
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 9px -apple-system, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("!", c.x, y);
+    }
+
+    ctx.globalAlpha = 1;
+  }
+
+  // ---- Clock / time axis (top center) ----
+  ctx.fillStyle = "#bfae7a";
+  ctx.font = "10px 'Courier New', monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(fmtYear(Math.min(m, HORIZON_MONTHS - 1)), CAN_W / 2, 16);
+
+  // ---- Year progress ticks along the bottom ----
+  const axisY = CAN_H - 6;
+  ctx.strokeStyle = "#d8cfb3";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(FLOOR_L, axisY);
+  ctx.lineTo(FLOOR_R, axisY);
+  ctx.stroke();
+  ctx.fillStyle = "#a0915d";
+  ctx.font = "bold 8px -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  for (let y = 0; y <= 5; y++) {
+    const px = FLOOR_L + (FLOOR_R - FLOOR_L) * (y / 5);
+    ctx.beginPath();
+    ctx.moveTo(px, axisY - 2);
+    ctx.lineTo(px, axisY + 2);
+    ctx.stroke();
+    if (y < 5) ctx.fillText("Y" + (y + 1), px + (FLOOR_R - FLOOR_L) / 10, axisY - 5);
+  }
+  // playhead
+  const phx = FLOOR_L + (FLOOR_R - FLOOR_L) * Math.min(1, m / HORIZON_MONTHS);
+  ctx.fillStyle = "#b8860b";
+  ctx.beginPath();
+  ctx.arc(phx, axisY, 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function fmtPct(v) { return (v * 100).toFixed(0) + "%"; }
+function fmtPct1(v) { return (v * 100).toFixed(1) + "%"; }
+
+function renderKPIs(elId, sim, otherSim) {
+  const k = sim.kpis();
+  const o = otherSim.kpis();
+
+  function delta(value, otherValue, fmt, betterWhen) {
+    const d = value - otherValue;
+    if (Math.abs(d) < 0.0005) return "";
+    const isBetter = (betterWhen === "lower" ? d < 0 : d > 0);
+    const cls = isBetter ? "delta-good" : "delta-bad";
+    const sign = d > 0 ? "+" : "";
+    return ` <span class="${cls}">(${sign}${fmt(d)})</span>`;
+  }
+
+  // attrition cost framing: each exit ≈ 6–9 months of salary (use 7.5 mo,
+  // median salary €4,500/mo → ≈ €33.75k per exit)
+  const COST_PER_EXIT = 33750;
+  const attritionCost = k.departures * COST_PER_EXIT;
+  const attritionCostO = o.departures * COST_PER_EXIT;
+  const eur = v => "€" + Math.round(v / 1000) + "k";
+
+  const rows = [
+    ["Mean satisfaction", fmtPct(k.meanSat) + delta(k.meanSat, o.meanSat, v => fmtPct(v), "higher"), ""],
+    ["Annual turnover",   fmtPct1(k.annTurnover) + delta(k.annTurnover, o.annTurnover, v => (v * 100).toFixed(1) + "pp", "lower"), ""],
+    ["Burnout rate",      fmtPct(k.burnoutRate) + delta(k.burnoutRate, o.burnoutRate, v => (v * 100).toFixed(0) + "pp", "lower"), ""],
+    ["Headcount",         `${k.headcount}`, ""],
+    ["Exits (cumul.)",    `${k.departures}` + delta(k.departures, o.departures, v => v.toFixed(0), "lower"), ""],
+    ["Attrition cost",    eur(attritionCost) + delta(attritionCost, attritionCostO, v => eur(v), "lower"),
+                          k.departures > 0 ? `≈ 7.5 mo salary / exit` : ""],
+  ];
+
+  let html = "";
+  for (const [lbl, val, sub] of rows) {
+    html += `<div class="kpi"><span class="kpi-label">${lbl}</span><span class="kpi-value">${val}${sub ? `<br><span class="kpi-proj">${sub}</span>` : ""}</span></div>`;
+  }
+  document.getElementById(elId).innerHTML = html;
+}
+
+// ============================================================
+// Main loop
+// ============================================================
+const SEED = 20260615;   // fixed → deterministic result
+const STEP_MONTH = 3;    // size of "1 step" in sim-months
+let seats, simBad, simGood, ctxBad, ctxGood;
+let simMonth = 0;
+let lastFrameTime = null;
+let running = true;
+let speedIdx = 1;
+
+function buildAll() {
+  seats   = buildWorkforce(SEED);
+  simBad  = new CultureSim("bad",  seats);
+  simGood = new CultureSim("good", seats);
+  ctxBad  = setupCanvas(document.getElementById("canvas-bad"));
+  ctxGood = setupCanvas(document.getElementById("canvas-good"));
+  simMonth = 0;
+  lastFrameTime = null;
+  running = true;
+  document.getElementById("pauseBtn").textContent = "⏸ Pause";
+  document.getElementById("banner-bad").classList.remove("show");
+  document.getElementById("banner-good").classList.remove("show");
+}
+
+// Advance (or rewind+advance) both simulations to targetMonth.
+// The engine is monotonic, so rewinding rebuilds and replays (deterministic).
+function jumpTo(targetMonth) {
+  targetMonth = Math.max(0, Math.min(HORIZON_MONTHS, targetMonth));
+  if (targetMonth < simBad.month) {
+    simBad  = new CultureSim("bad",  seats);
+    simGood = new CultureSim("good", seats);
+  }
+  simBad.advanceTo(targetMonth);
+  simGood.advanceTo(targetMonth);
+  simMonth = targetMonth;
+  if (targetMonth < HORIZON_MONTHS) {
+    document.getElementById("banner-bad").classList.remove("show");
+    document.getElementById("banner-good").classList.remove("show");
+  }
+}
+
+function tick(now) {
+  if (lastFrameTime === null) lastFrameTime = now;
+  const dt = (now - lastFrameTime) / 1000;
+  lastFrameTime = now;
+
+  if (running && simMonth < HORIZON_MONTHS) {
+    const monthsPerSec = HORIZON_MONTHS / REAL_DURATION_SEC;
+    simMonth += dt * monthsPerSec * SPEEDS[speedIdx];
+    if (simMonth > HORIZON_MONTHS) simMonth = HORIZON_MONTHS;
+    simBad.advanceTo(Math.floor(simMonth));
+    simGood.advanceTo(Math.floor(simMonth));
+  }
+  drawFloor(ctxBad,  simBad,  simMonth);
+  drawFloor(ctxGood, simGood, simMonth);
+
+  const yr = Math.min(5, Math.floor(simMonth / 12) + 1);
+  const clockStr = "Year " + yr;
+  document.getElementById("clock-bad").textContent  = clockStr;
+  document.getElementById("clock-good").textContent = clockStr;
+
+  const progPct = Math.min(100, (simMonth / HORIZON_MONTHS) * 100);
+  document.getElementById("prog-bad").style.width  = progPct + "%";
+  document.getElementById("prog-good").style.width = progPct + "%";
+
+  renderKPIs("kpis-bad",  simBad,  simGood);
+  renderKPIs("kpis-good", simGood, simBad);
+
+  if (simMonth >= HORIZON_MONTHS) {
+    document.getElementById("banner-bad").textContent  = "TALENT HEMORRHAGE · every exit costs ~6–9 months of salary";
+    document.getElementById("banner-good").textContent = "HIGHER RETENTION, LOWER BURNOUT · culture compounds";
+    document.getElementById("banner-bad").classList.add("show");
+    document.getElementById("banner-good").classList.add("show");
+  }
+
+  requestAnimationFrame(tick);
+}
+
+// ============================================================
+// Controls
+// ============================================================
+function updateSpeedLabel() {
+  document.getElementById("speedLabel").textContent = SPEEDS[speedIdx].toFixed(1) + "×";
+}
+document.getElementById("speedBtn").addEventListener("click", () => {
+  speedIdx = (speedIdx + 1) % SPEEDS.length;
+  updateSpeedLabel();
+});
+document.getElementById("pauseBtn").addEventListener("click", () => {
+  running = !running;
+  document.getElementById("pauseBtn").textContent = running ? "⏸ Pause" : "▶ Resume";
+});
+document.getElementById("stepFwdBtn").addEventListener("click", () => {
+  running = false;
+  document.getElementById("pauseBtn").textContent = "▶ Resume";
+  jumpTo(Math.round(simMonth) + STEP_MONTH);
+});
+document.getElementById("stepBackBtn").addEventListener("click", () => {
+  running = false;
+  document.getElementById("pauseBtn").textContent = "▶ Resume";
+  jumpTo(Math.round(simMonth) - STEP_MONTH);
+});
+document.getElementById("resetBtn").addEventListener("click", () => {
+  buildAll();
+});
+
+// Boot
+updateSpeedLabel();
+buildAll();
+requestAnimationFrame(tick);
+</script>
+
+<!-- oux:behavior --><script>
+(function(){
+function ready(fn){if(document.readyState!=="loading"){setTimeout(fn,0);}else{document.addEventListener("DOMContentLoaded",fn);}}
+ready(function(){
+  // --- responsive table wrapping (all templates) ---
+  document.querySelectorAll("table").forEach(function(t){
+    var p=t.parentElement;
+    if(!p)return;
+    if(p.classList&&(p.classList.contains("oux-tbl-wrap")||p.classList.contains("table-responsive")))return;
+    // skip tiny KPI-style tables (<=2 cols and <=2 rows)
+    var cols=t.rows&&t.rows[0]?t.rows[0].cells.length:0;
+    if(cols<=1)return;
+    var w=document.createElement("div");w.className="oux-tbl-wrap";
+    p.insertBefore(w,t);w.appendChild(t);
+  });
+
+});
+})();
+</script><!-- /oux:behavior --></body>
+</html>

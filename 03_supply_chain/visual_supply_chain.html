@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><!-- optidice-ux v1 --><!-- oux:viewport --><meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- /oux:viewport --><!-- oux:meta --><meta name="description" content="Supply Chain Resilience - Animated Simulation - an animated canvas simulation by OptiDice."><!-- /oux:meta --><!-- oux:favicon --><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23161b22"/><text x="32" y="44" font-family="Segoe UI,Arial,sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="%23D4A437">OD</text></svg>"><!-- /oux:favicon --><!-- oux:style --><style>
+.oux-header{position:fixed;top:0;left:0;right:0;height:48px;z-index:10001;
+background:#161b22;color:#e6edf3;display:flex;align-items:center;
+gap:14px;padding:0 14px;box-shadow:0 2px 8px rgba(0,0,0,0.35);
+font-family:"Segoe UI",system-ui,-apple-system,sans-serif;font-size:14px;}
+.oux-header a.oux-wordmark{color:#D4A437;font-weight:800;text-decoration:none;
+letter-spacing:0.5px;font-size:16px;white-space:nowrap;flex:0 0 auto;}
+.oux-header a.oux-wordmark:hover{filter:brightness(1.2);}
+.oux-header .oux-title{flex:1 1 auto;text-align:center;font-weight:600;
+color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+min-width:0;opacity:0.92;}
+.oux-header .oux-right{flex:0 0 auto;display:flex;align-items:center;gap:8px;}
+.oux-header button.oux-skim{background:transparent;border:1px solid #D4A437;
+color:#D4A437;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;
+font-family:inherit;white-space:nowrap;}
+.oux-header button.oux-skim:hover{background:#D4A437;color:#161b22;}
+body.oux-skimming .oux-header button.oux-skim{background:#D4A437;color:#161b22;}
+.oux-skiplink{position:absolute;left:-999px;top:0;z-index:10002;background:#D4A437;
+color:#161b22;padding:8px 14px;border-radius:0 0 8px 0;text-decoration:none;font-weight:600;}
+.oux-skiplink:focus{left:0;}
+body{padding-top:48px;}
+
+@media print{.oux-header,.oux-skiplink{display:none !important;}body{padding-top:0 !important;}}
+@media (max-width:600px){.oux-header .oux-title{display:none;}}
+
+.oux-tbl-wrap{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.oux-tbl-wrap > table{min-width:max-content;}
+.table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+@media (max-width:760px){
+  .oux-tbl-wrap > table, .table-responsive > table{font-size:0.82em;}
+}
+</style><!-- /oux:style -->
+<meta charset="UTF-8">
+<title>Visual Simulation · Supply Chain under Disruption</title>
+<style>
+  :root {
+    --parchment: #f5efe1;
+    --parchment-dark: #e8dfc8;
+    --ink: #2a2a2a;
+    --ink-soft: #5a5a5a;
+    --bad: #b33939;
+    --good: #2d8a45;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--parchment);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    padding: 18px 14px 28px;
+    min-height: 100vh;
+  }
+  header.app-head { text-align: center; margin-bottom: 6px; }
+  header.app-head h1 { margin: 0; font-size: 21px; letter-spacing: 0.4px; }
+  header.app-head p { margin: 4px 0 0; color: var(--ink-soft); font-size: 13px; }
+
+  .controls {
+    display: flex; gap: 12px; justify-content: center;
+    margin: 14px 0 18px;
+  }
+  .controls button {
+    background: #fff;
+    border: 1.5px solid var(--ink);
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 4px;
+    font-family: inherit;
+    color: var(--ink);
+    transition: background 0.15s, transform 0.05s;
+    min-width: 120px;
+  }
+  .controls button#speedBtn { min-width: 170px; }
+  .controls button#resetBtn { min-width: 140px; }
+  .controls button:hover { background: var(--parchment-dark); }
+  .controls button:active { transform: translateY(1px); }
+  .controls .speed-label {
+    display: inline-block;
+    font-family: "Courier New", monospace;
+    margin-left: 6px;
+    font-size: 14px;
+  }
+
+  .stage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .store {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+    border: 2px solid;
+    display: flex;
+    flex-direction: column;
+  }
+  .store-bad { border-color: var(--bad); }
+  .store-good { border-color: var(--good); }
+
+  .store-header {
+    padding: 10px 14px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .store-bad .store-header { background: linear-gradient(135deg, var(--bad), #8b2c2c); }
+  .store-good .store-header { background: linear-gradient(135deg, var(--good), #1f6b34); }
+
+  .scenario-name { font-weight: 800; font-size: 14px; letter-spacing: 0.6px; }
+  .scenario-sub  { font-size: 11px; opacity: 0.9; margin-top: 2px; }
+  .clock {
+    font-family: "Courier New", monospace;
+    font-size: 22px; font-weight: 700;
+  }
+
+  .day-progress { height: 4px; background: rgba(255,255,255,0.22); }
+  .day-progress-fill { height: 100%; background: #fff; width: 0%; }
+
+  .store-floor { position: relative; background: #faf6ec; }
+  .store-floor canvas { display: block; width: 100%; height: auto; }
+
+  .kpis {
+    padding: 10px 12px;
+    background: #fff;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px 14px;
+    font-size: 11.5px;
+    border-top: 1px solid var(--parchment-dark);
+  }
+  .kpi {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dotted #d8d2bb;
+    padding-bottom: 3px;
+  }
+  .kpi-label { color: var(--ink-soft); }
+  .kpi-value {
+    font-weight: 700;
+    font-family: "Courier New", monospace;
+    text-align: right;
+  }
+  .kpi-proj {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #998a5a;
+    margin-top: 1px;
+    letter-spacing: 0.2px;
+  }
+  .delta-good { color: var(--good); font-weight: 700; }
+  .delta-bad  { color: var(--bad);  font-weight: 700; }
+
+  .final-banner {
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #fff;
+    display: none;
+  }
+  .store-bad .final-banner.show { display: block; background: #6e1f1f; }
+  .store-good .final-banner.show { display: block; background: #1f5a2a; }
+
+  .legend {
+    text-align: center;
+    margin: 18px auto 0;
+    max-width: 980px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.9;
+  }
+  .legend-sq {
+    display: inline-block;
+    width: 12px; height: 9px;
+    vertical-align: middle;
+    margin-right: 4px;
+    border-radius: 2px;
+    border: 1px solid rgba(0,0,0,0.2);
+  }
+  .legend-dot {
+    display: inline-block;
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 4px;
+    border: 1px solid rgba(0,0,0,0.25);
+  }
+  .legend-pill { display: inline-block; margin: 0 9px; }
+  .legend small { display: block; margin-top: 6px; color: #8a8062; }
+
+  @media (max-width: 900px) {
+    .stage { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body><!-- oux:skiplink --><a class="oux-skiplink" href="#oux-content">Skip to content</a><!-- /oux:skiplink --><!-- oux:header-bar --><div class="oux-header" role="banner"><a class="oux-wordmark" href="https://www.optidice.com" target="_blank" rel="noopener">OptiDice</a><span class="oux-title">Supply Chain Resilience - Animated Simulation</span><div class="oux-right"><a class="oux-skim" href="supply_chain_mc_report.html" style="text-decoration:none;">← Back to full report</a></div></div><!-- /oux:header-bar -->
+
+<header class="app-head" id="oux-content">
+  <h1>Operational Simulation · 52 weeks across a multi-echelon network</h1>
+  <p>Same demand and the same supplier outage on both sides — only the inventory strategy changes</p>
+</header>
+
+<div class="controls">
+  <button id="speedBtn">Speed<span class="speed-label" id="speedLabel">1.0×</span></button>
+  <button id="pauseBtn">⏸ Pause</button>
+  <button id="stepBackBtn" title="Rewind 2 sim-weeks">⏮ −2wk</button>
+  <button id="stepFwdBtn" title="Advance 2 sim-weeks">⏭ +2wk</button>
+  <button id="resetBtn">⟲ Reset</button>
+</div>
+
+<div class="stage">
+  <div class="store store-bad">
+    <div class="store-header">
+      <div>
+        <div class="scenario-name">LEAN / JIT</div>
+        <div class="scenario-sub">Near-zero buffers · 1 week safety stock · cheapest in calm weather</div>
+      </div>
+      <div class="clock" id="clock-bad">Wk 1</div>
+    </div>
+    <div class="day-progress"><div class="day-progress-fill" id="prog-bad"></div></div>
+    <div class="store-floor"><canvas id="canvas-bad"></canvas></div>
+    <div class="final-banner" id="banner-bad">END OF YEAR · FINAL RESULTS</div>
+    <div class="kpis" id="kpis-bad"></div>
+  </div>
+
+  <div class="store store-good">
+    <div class="store-header">
+      <div>
+        <div class="scenario-name">BALANCED + SAFETY STOCK</div>
+        <div class="scenario-sub">2 weeks safety stock · multi-sourcing · resilient to shocks</div>
+      </div>
+      <div class="clock" id="clock-good">Wk 1</div>
+    </div>
+    <div class="day-progress"><div class="day-progress-fill" id="prog-good"></div></div>
+    <div class="store-floor"><canvas id="canvas-good"></canvas></div>
+    <div class="final-banner" id="banner-good">END OF YEAR · FINAL RESULTS</div>
+    <div class="kpis" id="kpis-good"></div>
+  </div>
+</div>
+
+<div class="legend">
+  <span class="legend-pill"><span class="legend-sq" style="background:#7a8a9a"></span>Supplier</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#8b6f47"></span>Plant</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#5a7a8a"></span>Distribution Centre</span>
+  <span class="legend-pill"><span class="legend-dot" style="background:#2d8a45"></span>Region served</span>
+  <span class="legend-pill"><span class="legend-dot" style="background:#b33939"></span>Region in stockout</span>
+  <br>
+  <span class="legend-pill"><span class="legend-dot" style="background:#d4a437"></span>Goods in transit</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#2d8a45"></span>DC inventory (safety-stock band shaded)</span>
+  <span class="legend-pill"><span class="legend-sq" style="background:#e74c3c"></span>Disrupted supplier (link cut)</span>
+  <small>
+    52 weeks compressed into ~36 s at default speed · A primary-supplier outage strikes around week 21 and lasts ~6 weeks (identical on both sides) ·
+    Lean runs near-empty so it starves immediately; Balanced draws down safety stock and keeps serving ·
+    Fill rate = share of demanded units delivered · Lost sales valued at €50/unit (same convention as the Monte Carlo report) ·
+    Fixed seed: identical result on every reset · A single illustrative year, not the 14,400-run Monte Carlo distribution
+  </small>
+</div>
+
+<script>
+/* ENGINE-START (pure logic, no DOM — kept separate so it can be tested headless) */
+// ============================================================
+// Calibration — mirrors supply_chain_sim.py / sim_engine.py
+//   Network: 3 suppliers -> 2 plants -> 3 DCs -> 5 customer regions
+//   Strategy safety-stock weeks: Conservative 3, Balanced 2, Lean 1
+//   Lost sales valued at €50/unit (sell_price). Holding €0.50/unit/week.
+// This file animates ONE illustrative 52-week year with a fixed mid-run
+// disruption, rather than the 14,400-run Monte Carlo sweep. The weekly
+// inventory / fulfilment logic follows the same shape as the Python engine
+// (replenish to target, fulfil demand, draw down buffers, carry backorders).
+// ============================================================
+const N_WEEKS   = 52;
+const N_SUP     = 3;
+const N_PLANT   = 2;
+const N_DC      = 3;
+const N_REGION  = 5;
+
+const SELL_PRICE = 50.0;          // €/unit lost-sales valuation
+const HOLD_RATE  = 0.50;          // €/unit/week (informational)
+
+// Regional base weekly demand (units) — A-seasonal, B-trending, C-volatile, D-stable, E-growing
+const BASE_DEM   = [800, 600, 1000, 500, 700];
+const TOTAL_BD   = BASE_DEM.reduce((a, b) => a + b, 0);   // 3600 units/week
+
+// Share of total demand each DC serves (Distributed network)
+const DC_W       = [0.34, 0.33, 0.33];
+
+// The disruption: primary supplier (Asia, index 0) fails mid-run.
+// Both scenarios receive the SAME event so the contrast is purely the buffer policy.
+const DISRUPT_START = 21;         // week the outage begins
+const DISRUPT_LEN   = 6;          // weeks it lasts
+const DISRUPT_SUP   = 0;          // which supplier goes down (Asia, the largest)
+const SUP_SHARE     = [0.55, 0.27, 0.18];   // normal capacity share per supplier
+const DISRUPT_FLOOR = 0.10;       // disrupted supplier runs at 10% capacity
+
+const REAL_DURATION_SEC = 36;     // 1× ≈ 36s for the 52-week year
+const SPEEDS = [0.5, 1.0, 2.0, 4.0];
+
+// Strategy config:
+//   safetyWk   – weeks of demand held as the DC's target stock band (sizes the bar)
+//   startFrac  – how full the band is at week 0
+//   refillMult – calm-week inbound throughput as a MULTIPLE of weekly demand
+//                (>1 so a healthy DC tops up faster than it sells)
+//   multiSource– whether backup suppliers (Europe/Americas) can cover the outage
+// During the outage `supplyAvailability` scales inbound down: a single-source
+// policy loses almost everything, a multi-source policy keeps the backups' share.
+const SCENARIOS = {
+  bad: {
+    label: "LEAN / JIT",
+    safetyWk: 1.5,               // near-zero buffers: ~1.5 weeks of cover
+    startFrac: 1.00,             // starts full (calm weather, JIT topped up)
+    refillMult: 1.90,           // ample inbound in calm weeks — keeps pace with growth
+    multiSource: false           // over-reliant on the primary supplier
+  },
+  good: {
+    label: "BALANCED + SAFETY STOCK",
+    safetyWk: 3,                 // genuine safety stock: 3 weeks of cover
+    startFrac: 1.00,             // starts full
+    refillMult: 2.10,           // higher inbound throughput
+    multiSource: true            // re-routes to backup suppliers during the outage
+  }
+};
+
+// ============================================================
+// Deterministic RNG (mulberry32) — identical generator to the other visuals
+// ============================================================
+function mulberry32(seed) {
+  let s = seed >>> 0;
+  return function() {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ============================================================
+// Deterministic weekly demand stream (shared by both scenarios).
+// Mirrors the seasonal / trending / volatile / stable / growing region mix.
+// ============================================================
+function generateDemand(seed) {
+  const rng = mulberry32(seed);
+  const weeks = [];
+  for (let w = 0; w < N_WEEKS; w++) {
+    const reg = [];
+    for (let r = 0; r < N_REGION; r++) {
+      let seasonal = 1.0, trend = 1.0, nstd = 0.10;
+      if (r === 0)       seasonal = 1.0 + 0.30 * Math.sin(2 * Math.PI * (w - 10) / 52);
+      else if (r === 1)  trend = 1.0 + 0.40 * w / 52;
+      else if (r === 2)  nstd = 0.25;
+      else if (r === 3)  nstd = 0.05;
+      else               trend = 1.0 + 0.50 * w / 52;
+      if (r !== 0) seasonal = 1.0 + 0.08 * Math.sin(2 * Math.PI * (w - 13) / 52);
+      // Box-Muller for the multiplicative noise (deterministic via the seeded rng)
+      const u1 = Math.max(1e-9, rng()), u2 = rng();
+      const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+      const noise = Math.max(0.30, 1.0 + nstd * z);
+      reg.push(Math.max(0, BASE_DEM[r] * seasonal * trend * noise));
+    }
+    weeks.push(reg);
+  }
+  return weeks;
+}
+
+// Supplier-capacity factor this week (1 = full). During the outage the disrupted
+// supplier drops to DISRUPT_FLOOR during the outage. Shared by both scenarios.
+function supFactor(s, w) {
+  if (s === DISRUPT_SUP && w >= DISRUPT_START && w < DISRUPT_START + DISRUPT_LEN) {
+    return DISRUPT_FLOOR;
+  }
+  return 1.0;
+}
+
+// Effective inbound supply availability this week (0..1) for a given strategy.
+// Normal weeks → 1.0. During the outage the disrupted supplier carries
+// SUP_SHARE[0]; a multi-source policy retains the backups' share, a
+// single-source policy loses almost everything.
+function supplyAvailability(scn, w) {
+  let avail = 0;
+  for (let s = 0; s < N_SUP; s++) {
+    const f = supFactor(s, w);
+    if (s === DISRUPT_SUP) {
+      avail += SUP_SHARE[s] * f;
+    } else if (scn.multiSource) {
+      // Re-routing to backups works, but ramp-up limits mean only ~62% of their
+      // nominal share comes online quickly → Balanced still draws down its buffer.
+      avail += SUP_SHARE[s] * f * 0.62;
+    } else {
+      avail += SUP_SHARE[s] * f * 0.10;         // single-source barely taps backups
+    }
+  }
+  return Math.max(0, Math.min(1, avail));
+}
+
+// ============================================================
+// Scenario simulation — week by week
+// ============================================================
+class ChainSim {
+  constructor(scenarioKey, demand) {
+    this.key = scenarioKey;
+    this.scn = SCENARIOS[scenarioKey];
+    this.demand = demand;
+    this.w = 0;                 // weeks completed
+    this.finalized = false;
+
+    // Each DC's stock band (= safetyWk × that DC's weekly demand). This is the
+    // operating capacity the bar is drawn against — the higher a strategy's
+    // safety weeks, the deeper the buffer it can draw on during an outage.
+    // The order-up-to target adds one week of demand on top of the band so a
+    // healthy DC, after selling a week, lands back inside its band.
+    this.dcCap  = [];
+    this.target = [];
+    this.inv    = [];
+    for (let d = 0; d < N_DC; d++) {
+      const weeklyDem = TOTAL_BD * DC_W[d];
+      const cap = this.scn.safetyWk * weeklyDem;
+      this.dcCap.push(cap);
+      this.target.push(cap + weeklyDem);
+      this.inv.push(cap * this.scn.startFrac);
+    }
+    this.backorder = [0, 0, 0];
+
+    // accumulators
+    this.cumDem = 0;
+    this.cumFul = 0;
+    this.nOrders = 0;
+    this.nOnTime = 0;
+    this.lostUnits = 0;        // aged backorders that become lost sales
+    this.lostEuros = 0;
+    this.holdEuros = 0;
+
+    // per-week display state (for the canvas)
+    this.regionServed = [1, 1, 1, 1, 1];   // 0..1 fill ratio per region, this week
+    this.dcFill = this.inv.map((v, d) => v / this.dcCap[d]);
+    this.supActive = [1, 1, 1];            // supplier link health for drawing
+    this.flow = 1;                          // 0..1, how busy the inbound pipeline is
+  }
+
+  fillRate()    { return this.cumDem > 0 ? this.cumFul / this.cumDem : 1; }
+  serviceLevel(){ return this.nOrders > 0 ? this.nOnTime / this.nOrders : 1; }
+
+  step() {
+    const w = this.w;
+    const dem = this.demand[w];
+    const scn = this.scn;
+
+    // ── supplier health (shared event) ──
+    for (let s = 0; s < N_SUP; s++) this.supActive[s] = supFactor(s, w) > 0.5 ? 1 : 0;
+    const supplyFactor = supplyAvailability(scn, w);
+    this.flow = supplyFactor;
+
+    // ── 1. Inbound replenishment: order up to target each DC. Calm-week inbound
+    //       throughput is refillMult × that DC's weekly demand (>1, so a healthy
+    //       DC restocks faster than it sells); the outage scales it down hard. ──
+    for (let d = 0; d < N_DC; d++) {
+      const weeklyDem = TOTAL_BD * DC_W[d];
+      // order up to target, plus whatever backlog is outstanding, so the DC can
+      // actually recover once the supplier comes back online.
+      const want = Math.max(0, this.target[d] + this.backorder[d] - this.inv[d]);
+      const maxIn = weeklyDem * scn.refillMult * supplyFactor;
+      this.inv[d] += Math.min(want, maxIn);
+    }
+
+    // ── 2. Fulfil demand: backorders first, then this week's orders. ──
+    let wkDem = 0, wkFul = 0;
+    for (let r = 0; r < N_REGION; r++) wkDem += dem[r];
+
+    // service carried-over backorders out of fresh stock
+    for (let d = 0; d < N_DC; d++) {
+      if (this.backorder[d] > 0) {
+        const fill = Math.min(this.inv[d], this.backorder[d]);
+        this.inv[d] -= fill;
+        this.backorder[d] -= fill;
+      }
+    }
+
+    // distribute demand to DCs by their share, fulfil from inventory
+    let regFul = [0, 0, 0, 0, 0];
+    for (let r = 0; r < N_REGION; r++) {
+      const need = dem[r];
+      let got = 0;
+      for (let d = 0; d < N_DC; d++) {
+        const alloc = dem[r] * DC_W[d];
+        const avail = Math.min(this.inv[d], alloc);
+        this.inv[d] -= avail;
+        got += avail;
+        wkFul += avail;
+        const short = alloc - avail;
+        this.nOrders++;
+        if (short < alloc * 0.02) this.nOnTime++;
+        else this.backorder[d] += short;
+      }
+      regFul[r] = need > 0 ? Math.min(1, got / need) : 1;
+    }
+    this.regionServed = regFul;
+
+    // ── 3. Age backorders → lost sales (half of any unmet backlog ages out). ──
+    for (let d = 0; d < N_DC; d++) {
+      if (this.backorder[d] > 0) {
+        const aged = this.backorder[d] * 0.5;
+        this.backorder[d] -= aged;
+        this.lostUnits += aged;
+        this.lostEuros += aged * SELL_PRICE;
+      }
+    }
+
+    // ── 4. Holding cost + accumulate KPI totals ──
+    for (let d = 0; d < N_DC; d++) this.holdEuros += Math.max(0, this.inv[d]) * HOLD_RATE;
+    this.cumDem += wkDem;
+    this.cumFul += Math.min(wkFul, wkDem);   // fill rate can't exceed demand
+    this.dcFill = this.inv.map((v, d) => Math.max(0, Math.min(1, v / this.dcCap[d])));
+
+    this.w++;
+    if (this.w >= N_WEEKS) this.finalized = true;
+  }
+
+  advanceTo(targetWeek) {
+    const cap = Math.min(targetWeek, N_WEEKS);
+    while (this.w < cap) this.step();
+  }
+
+  kpis() {
+    return {
+      week: this.w,
+      fillRate: this.fillRate() * 100,
+      serviceLevel: this.serviceLevel() * 100,
+      lostEuros: this.lostEuros,
+      lostUnits: this.lostUnits,
+      holdEuros: this.holdEuros,
+      avgDCFill: (this.dcFill[0] + this.dcFill[1] + this.dcFill[2]) / 3 * 100,
+      backorder: this.backorder[0] + this.backorder[1] + this.backorder[2]
+    };
+  }
+}
+/* ENGINE-END */
+</script>
+
+<script>
+// ============================================================
+// Rendering (canvas) — left-to-right echelon network
+//   Suppliers (col 0) -> Plants (col 1) -> DCs (col 2) -> Regions (col 3)
+// ============================================================
+const CAN_W = 540, CAN_H = 470;
+const COL_X = [70, 195, 330, 470];          // x of each echelon column
+const NODE_R = 16;                          // base node radius
+
+// Vertical layout per echelon
+function colYs(n) {
+  const top = 70, bot = CAN_H - 50;
+  if (n === 1) return [(top + bot) / 2];
+  const ys = [];
+  for (let i = 0; i < n; i++) ys.push(top + (bot - top) * i / (n - 1));
+  return ys;
+}
+const SUP_Y = colYs(N_SUP);
+const PLT_Y = colYs(N_PLANT);
+const DC_Y  = colYs(N_DC);
+const REG_Y = colYs(N_REGION);
+
+const SUP_LABELS = ["Asia", "Europe", "Americas"];
+const PLT_LABELS = ["Plant E", "Plant W"];
+const DC_LABELS  = ["DC-N", "DC-C", "DC-S"];
+const REG_LABELS = ["A", "B", "C", "D", "E"];
+
+// Goods-in-transit particles. Phase is derived from the animated sub-week
+// clock so flow looks continuous; intensity scales with the inbound `flow`.
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = CAN_W * dpr;
+  canvas.height = CAN_H * dpr;
+  canvas.style.width  = CAN_W + "px";
+  canvas.style.height = CAN_H + "px";
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return ctx;
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function drawNode(ctx, x, y, r, fill, stroke, label, sub) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.lineWidth = 1.6;
+  ctx.strokeStyle = stroke;
+  ctx.stroke();
+  if (label) {
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 9px -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, x, y);
+  }
+  if (sub) {
+    ctx.fillStyle = "#8a8062";
+    ctx.font = "8px -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(sub, x, y + r + 2);
+  }
+}
+
+function drawLink(ctx, x1, y1, x2, y2, alive, weight) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  if (alive) {
+    ctx.strokeStyle = "rgba(120,110,80," + (0.22 + 0.45 * weight) + ")";
+    ctx.lineWidth = 1 + 1.6 * weight;
+    ctx.setLineDash([]);
+  } else {
+    ctx.strokeStyle = "rgba(231,76,60,0.55)";
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([4, 4]);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+// Moving goods dots along a link
+function drawGoods(ctx, x1, y1, x2, y2, phase, count, color) {
+  for (let i = 0; i < count; i++) {
+    let t = (phase + i / count) % 1;
+    const x = lerp(x1, x2, t), y = lerp(y1, y2, t);
+    ctx.beginPath();
+    ctx.arc(x, y, 2.6, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+}
+
+function drawNetwork(ctx, sim, animPhase) {
+  const w = Math.min(sim.w, N_WEEKS);
+  const disrupted = (w >= DISRUPT_START && w < DISRUPT_START + DISRUPT_LEN);
+  const flow = sim.flow;
+
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, 0, CAN_H);
+  grad.addColorStop(0, "#faf6ec");
+  grad.addColorStop(1, "#f0e8d1");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, CAN_W, CAN_H);
+
+  // ---- Column headers ----
+  ctx.font = "bold 10px -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillStyle = "#a0915d";
+  ctx.fillText("SUPPLIERS", COL_X[0], 18);
+  ctx.fillText("PLANTS",    COL_X[1], 18);
+  ctx.fillText("DCs",       COL_X[2], 18);
+  ctx.fillText("REGIONS",   COL_X[3], 18);
+
+  // ---- Disruption banner ----
+  if (disrupted) {
+    ctx.fillStyle = "#a3334e";
+    ctx.font = "bold 11px -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("⚠ SUPPLIER DISRUPTION — Asia offline", CAN_W / 2, 36);
+  }
+
+  // ---- Links: suppliers -> plants ----
+  for (let s = 0; s < N_SUP; s++) {
+    const alive = !(disrupted && s === DISRUPT_SUP);
+    for (let p = 0; p < N_PLANT; p++) {
+      drawLink(ctx, COL_X[0], SUP_Y[s], COL_X[1], PLT_Y[p], alive, flow);
+    }
+  }
+  // plants -> DCs
+  for (let p = 0; p < N_PLANT; p++)
+    for (let d = 0; d < N_DC; d++)
+      drawLink(ctx, COL_X[1], PLT_Y[p], COL_X[2], DC_Y[d], true, flow);
+  // DCs -> regions (weight by how well the region is being served)
+  for (let d = 0; d < N_DC; d++)
+    for (let r = 0; r < N_REGION; r++)
+      drawLink(ctx, COL_X[2], DC_Y[d], COL_X[3], REG_Y[r], true, sim.regionServed[r] * 0.8);
+
+  // ---- Goods in transit (only on live supplier links) ----
+  const goodColor = "#d4a437";
+  const nGoods = Math.max(0, Math.round(flow * 3));
+  for (let s = 0; s < N_SUP; s++) {
+    const alive = !(disrupted && s === DISRUPT_SUP);
+    if (!alive) continue;
+    for (let p = 0; p < N_PLANT; p++)
+      drawGoods(ctx, COL_X[0], SUP_Y[s], COL_X[1], PLT_Y[p], animPhase, nGoods, goodColor);
+  }
+  for (let p = 0; p < N_PLANT; p++)
+    for (let d = 0; d < N_DC; d++)
+      drawGoods(ctx, COL_X[1], PLT_Y[p], COL_X[2], DC_Y[d], (animPhase + 0.33) % 1, nGoods, goodColor);
+
+  // ---- Supplier nodes ----
+  for (let s = 0; s < N_SUP; s++) {
+    const down = disrupted && s === DISRUPT_SUP;
+    let fill = "#7a8a9a", stroke = "#566472";
+    if (down) {
+      // flash red during the outage
+      const flash = 0.5 + 0.5 * Math.sin(animPhase * Math.PI * 6);
+      fill = "rgb(" + Math.round(180 + 50 * flash) + ",57,57)";
+      stroke = "#7a1f1f";
+    }
+    drawNode(ctx, COL_X[0], SUP_Y[s], NODE_R, fill, stroke, "", SUP_LABELS[s]);
+    if (down) {
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 13px -apple-system, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("✕", COL_X[0], SUP_Y[s]);
+    }
+  }
+
+  // ---- Plant nodes ----
+  for (let p = 0; p < N_PLANT; p++)
+    drawNode(ctx, COL_X[1], PLT_Y[p], NODE_R - 1, "#8b6f47", "#5e4a30", "", PLT_LABELS[p]);
+
+  // ---- DC nodes with inventory bars ----
+  for (let d = 0; d < N_DC; d++) {
+    const x = COL_X[2], y = DC_Y[d];
+    drawNode(ctx, x, y, NODE_R + 2, "#5a7a8a", "#3d5460", "", DC_LABELS[d]);
+
+    // Inventory bar to the left of the DC node, drawn against the DC's stock band.
+    const barW = 9, barH = 44;
+    const bx = x - NODE_R - 16, by = y - barH / 2;
+    // track (full band)
+    ctx.fillStyle = "#e6ddc6";
+    ctx.fillRect(bx, by, barW, barH);
+    // critical "reorder" zone shaded at the bottom 30% of the band
+    const SAFETY_FRAC = 0.30;
+    ctx.fillStyle = "rgba(179,57,57,0.12)";
+    ctx.fillRect(bx, by + barH * (1 - SAFETY_FRAC), barW, barH * SAFETY_FRAC);
+    // current inventory fill
+    const lvl = sim.dcFill[d];
+    const col = lvl < 0.12 ? "#b33939" : (lvl < SAFETY_FRAC ? "#e07b39" : "#2d8a45");
+    ctx.fillStyle = col;
+    ctx.fillRect(bx, by + barH * (1 - lvl), barW, barH * lvl);
+    ctx.strokeStyle = "#b6ab8a";
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(bx, by, barW, barH);
+  }
+
+  // ---- Region nodes (green = served, red = stockout) ----
+  for (let r = 0; r < N_REGION; r++) {
+    const served = sim.regionServed[r];
+    const x = COL_X[3], y = REG_Y[r];
+    let fill, stroke;
+    if (served >= 0.95)      { fill = "#2d8a45"; stroke = "#1f6b34"; }
+    else if (served >= 0.6)  { fill = "#e0a83c"; stroke = "#a87a1f"; }
+    else                     { fill = "#b33939"; stroke = "#7a1f1f"; }
+    drawNode(ctx, x, y, NODE_R - 2, fill, stroke, REG_LABELS[r], "");
+    // stockout marker
+    if (served < 0.6) {
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 8px -apple-system, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText("stockout", x + NODE_R, y);
+    }
+  }
+
+  // ---- Week clock (bottom) ----
+  ctx.fillStyle = "#bfae7a";
+  ctx.font = "11px 'Courier New', monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.fillText("Week " + Math.max(1, w) + " / " + N_WEEKS, CAN_W / 2, CAN_H - 10);
+}
+
+function fmtEuro(v) {
+  if (v >= 1e6) return "€" + (v / 1e6).toFixed(2) + "M";
+  if (v >= 1e3) return "€" + (v / 1e3).toFixed(0) + "k";
+  return "€" + Math.round(v);
+}
+function fmtInt(v) { return Math.round(v).toLocaleString("en-US"); }
+
+function renderKPIs(elId, sim, otherSim) {
+  const k = sim.kpis();
+  const o = otherSim.kpis();
+
+  function delta(value, otherValue, fmt, betterWhen) {
+    const d = value - otherValue;
+    if (Math.abs(d) < 0.01) return "";
+    const isBetter = (betterWhen === "lower" ? d < 0 : d > 0);
+    const cls = isBetter ? "delta-good" : "delta-bad";
+    const sign = d > 0 ? "+" : "";
+    return ` <span class="${cls}">(${sign}${fmt(d)})</span>`;
+  }
+
+  const rows = [
+    ["Week",         `${Math.max(1, k.week)} / ${N_WEEKS}`, ""],
+    ["Fill rate",    k.fillRate.toFixed(1) + "%" + delta(k.fillRate, o.fillRate, v => v.toFixed(1) + "pp", "higher"), ""],
+    ["Service level",k.serviceLevel.toFixed(1) + "%" + delta(k.serviceLevel, o.serviceLevel, v => v.toFixed(1) + "pp", "higher"), ""],
+    ["Avg DC stock", k.avgDCFill.toFixed(0) + "%", ""],
+    ["Backorder",    fmtInt(k.backorder) + " u", ""],
+    ["Lost units",   fmtInt(k.lostUnits) + " u", ""],
+    ["Lost sales",   fmtEuro(k.lostEuros) + delta(k.lostEuros, o.lostEuros, v => fmtEuro(Math.abs(v)), "lower"), ""],
+    ["Holding cost", fmtEuro(k.holdEuros) + delta(k.holdEuros, o.holdEuros, v => fmtEuro(Math.abs(v)), "lower"), "the price of safety"],
+  ];
+
+  let html = "";
+  for (const [lbl, val, sub] of rows) {
+    html += `<div class="kpi"><span class="kpi-label">${lbl}</span><span class="kpi-value">${val}${sub ? `<br><span class="kpi-proj">${sub}</span>` : ""}</span></div>`;
+  }
+  document.getElementById(elId).innerHTML = html;
+}
+
+// ============================================================
+// Main loop
+// ============================================================
+const SEED = 20260613;   // fixed → deterministic result
+const STEP_WK = 2;       // size of "1 step" in sim-weeks
+let demand, simBad, simGood, ctxBad, ctxGood;
+let simWeek = 0;         // fractional week (drives smooth flow animation)
+let lastFrameTime = null;
+let running = true;
+let speedIdx = 1;
+
+function buildAll() {
+  demand  = generateDemand(SEED);
+  simBad  = new ChainSim("bad",  demand);
+  simGood = new ChainSim("good", demand);
+  ctxBad  = setupCanvas(document.getElementById("canvas-bad"));
+  ctxGood = setupCanvas(document.getElementById("canvas-good"));
+  simWeek = 0;
+  lastFrameTime = null;
+  running = true;
+  document.getElementById("pauseBtn").textContent = "⏸ Pause";
+  document.getElementById("banner-bad").classList.remove("show");
+  document.getElementById("banner-good").classList.remove("show");
+}
+
+// Advance (or rewind+replay) both sims to targetWeek. The engine is monotonic,
+// so rewinding rebuilds from scratch and replays (deterministic → same outputs).
+function jumpTo(targetWeek) {
+  targetWeek = Math.max(0, Math.min(N_WEEKS, targetWeek));
+  if (targetWeek < simBad.w) {
+    simBad  = new ChainSim("bad",  demand);
+    simGood = new ChainSim("good", demand);
+  }
+  simBad.advanceTo(targetWeek);
+  simGood.advanceTo(targetWeek);
+  simWeek = targetWeek;
+  if (targetWeek < N_WEEKS) {
+    document.getElementById("banner-bad").classList.remove("show");
+    document.getElementById("banner-good").classList.remove("show");
+  }
+}
+
+function tick(now) {
+  if (lastFrameTime === null) lastFrameTime = now;
+  const dt = (now - lastFrameTime) / 1000;
+  lastFrameTime = now;
+
+  if (running && simWeek < N_WEEKS) {
+    const weeksPerSec = N_WEEKS / REAL_DURATION_SEC;
+    simWeek += dt * weeksPerSec * SPEEDS[speedIdx];
+    if (simWeek > N_WEEKS) simWeek = N_WEEKS;
+    simBad.advanceTo(Math.floor(simWeek));
+    simGood.advanceTo(Math.floor(simWeek));
+  }
+
+  // animPhase: a fast 0..1 loop for goods particles, independent of sim speed
+  const animPhase = (now / 1400) % 1;
+  drawNetwork(ctxBad,  simBad,  animPhase);
+  drawNetwork(ctxGood, simGood, animPhase);
+
+  const wk = Math.max(1, Math.min(N_WEEKS, Math.ceil(simWeek)));
+  document.getElementById("clock-bad").textContent  = "Wk " + wk;
+  document.getElementById("clock-good").textContent = "Wk " + wk;
+
+  const progPct = Math.min(100, (simWeek / N_WEEKS) * 100);
+  document.getElementById("prog-bad").style.width  = progPct + "%";
+  document.getElementById("prog-good").style.width = progPct + "%";
+
+  renderKPIs("kpis-bad",  simBad,  simGood);
+  renderKPIs("kpis-good", simGood, simBad);
+
+  if (simWeek >= N_WEEKS) {
+    document.getElementById("banner-bad").classList.add("show");
+    document.getElementById("banner-good").classList.add("show");
+    document.getElementById("banner-bad").textContent  = "Lean is cheapest until the day it isn't.";
+    document.getElementById("banner-good").textContent = "Buffers absorb the shock — service holds through disruption.";
+  }
+
+  requestAnimationFrame(tick);
+}
+
+// ============================================================
+// Controls
+// ============================================================
+function updateSpeedLabel() {
+  document.getElementById("speedLabel").textContent = SPEEDS[speedIdx].toFixed(1) + "×";
+}
+document.getElementById("speedBtn").addEventListener("click", () => {
+  speedIdx = (speedIdx + 1) % SPEEDS.length;
+  updateSpeedLabel();
+});
+document.getElementById("pauseBtn").addEventListener("click", () => {
+  running = !running;
+  document.getElementById("pauseBtn").textContent = running ? "⏸ Pause" : "▶ Resume";
+});
+document.getElementById("stepFwdBtn").addEventListener("click", () => {
+  running = false;
+  document.getElementById("pauseBtn").textContent = "▶ Resume";
+  jumpTo(Math.floor(simWeek) + STEP_WK);
+});
+document.getElementById("stepBackBtn").addEventListener("click", () => {
+  running = false;
+  document.getElementById("pauseBtn").textContent = "▶ Resume";
+  jumpTo(Math.ceil(simWeek) - STEP_WK);
+});
+document.getElementById("resetBtn").addEventListener("click", () => {
+  buildAll();
+});
+
+// Boot
+updateSpeedLabel();
+buildAll();
+requestAnimationFrame(tick);
+</script>
+
+<!-- oux:behavior --><script>
+(function(){
+function ready(fn){if(document.readyState!=="loading"){setTimeout(fn,0);}else{document.addEventListener("DOMContentLoaded",fn);}}
+ready(function(){
+  // --- responsive table wrapping (all templates) ---
+  document.querySelectorAll("table").forEach(function(t){
+    var p=t.parentElement;
+    if(!p)return;
+    if(p.classList&&(p.classList.contains("oux-tbl-wrap")||p.classList.contains("table-responsive")))return;
+    // skip tiny KPI-style tables (<=2 cols and <=2 rows)
+    var cols=t.rows&&t.rows[0]?t.rows[0].cells.length:0;
+    if(cols<=1)return;
+    var w=document.createElement("div");w.className="oux-tbl-wrap";
+    p.insertBefore(w,t);w.appendChild(t);
+  });
+
+});
+})();
+</script><!-- /oux:behavior --></body>
+</html>
